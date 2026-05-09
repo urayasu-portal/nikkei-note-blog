@@ -448,13 +448,13 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       <div class="article-list">
         {recentPosts.map(post => (
           <a class="article-item" href={`/blog/${post.slug}`}>
-<div class="article-meta">{post.data.pubDate.toLocaleDateString('ja-JP')}｜{
-  post.data.category === 'nikkei' ? '日経ノート' :
-  post.data.category === 'deep' ? '深堀ノート' :
-  post.data.category === 'memo' ? '投資メモ' :
-  post.data.category === 'glossary' ? '用語解説' :
-  post.data.category || '日経ノート'
-}</div>
+　　　　　　　<div class="article-meta">{post.data.pubDate.toLocaleDateString('ja-JP')}｜{
+  　　　　　　　post.data.category === 'nikkei' ? '日経ノート' :
+　　　　　　　  post.data.category === 'deep' ? '深堀ノート' :
+　　　　　　　  post.data.category === 'memo' ? '投資メモ' :
+　　　　　　　  post.data.category === 'glossary' ? '用語解説' :
+　　　　　　　  post.data.category || '日経ノート'
+　　　　}</div>
 <h3>{post.data.title}</h3>
             <p>{post.data.description}</p>
           </a>
