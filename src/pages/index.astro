@@ -9,8 +9,9 @@ const latestPost = posts[0];
 const recentPosts = posts.slice(1, 4);
 
 // 最新の日経ノートを取得
-const latestNikkeiNote = posts.find(post => post.data.category === '日経ノート');
-
+const latestNikkeiNote = posts.find(post => 
+  post.data.category?.trim() === '日経ノート'.trim()
+);
 // カテゴリー集計
 const categoryCounts: Record<string, number> = {};
 posts.forEach(post => {
