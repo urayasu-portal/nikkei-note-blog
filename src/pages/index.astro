@@ -14,8 +14,13 @@ const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
 // カテゴリー集計
 const categoryCounts: Record<string, number> = {};
 posts.forEach(post => {
-  const cat = post.data.category || '未分類';
-  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+const categoryMap: Record<string, string> = {
+  'nikkei': '日経ノート',
+  'deep': '深堀ノート',
+  'memo': '投資メモ',
+  'glossary': '用語解説',
+};
+const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 });
 ---
 <!doctype html>
