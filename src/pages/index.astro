@@ -1,832 +1,481 @@
 ---
-const siteTitle = "今日の日本株ノート";
+import { getCollection } from 'astro:content';
 
-const marketSummary = [
-  { label: "日経平均", value: "39,420円 +180円", trend: "plus" },
-  { label: "TOPIX", value: "2,745pt +0.6%", trend: "plus" },
-  { label: "ドル円", value: "154円台前半", trend: "" },
-  { label: "米国市場", value: "NASDAQ高", trend: "plus" },
-  { label: "注目テーマ", value: "半導体・銀行・自動車", trend: "" },
-];
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
 
-const articles = [
-  {
-    date: "2026.05.07",
-    category: "深堀ノート",
-    title: "米国株高でも日本株の上値が重い理由を整理する",
-    description:
-      "為替、決算、金利、海外投資家動向から、日本株の地合いを多面的に確認します。",
-  },
-  {
-    date: "2026.05.06",
-    category: "日経ノート",
-    title: "日経平均は反落、利益確定売りと決算警戒が重荷",
-    description:
-      "大型株の動きとセクター別の濃淡を中心に、引け後の相場を振り返ります。",
-  },
-  {
-    date: "2026.05.05",
-    category: "投資メモ",
-    title: "決算シーズンに見るべき3つのポイント",
-    description:
-      "売上・利益だけでなく、通期見通しと為替前提の変化にも注目します。",
-  },
-];
+const latestPost = posts[0];
+const recentPosts = posts.slice(1, 4);
 
-const categories = [
-  { name: "日経ノート", count: 32 },
-  { name: "深堀ノート", count: 12 },
-  { name: "日経平均", count: 18 },
-  { name: "個別株メモ", count: 9 },
-  { name: "用語解説", count: 6 },
-];
-
-const themes = ["決算発表", "為替", "半導体", "銀行株", "米金利"];
+// カテゴリー集計
+const categoryCounts: Record<string, number> = {};
+posts.forEach(post => {
+  const cat = post.data.category || '未分類';
+  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+});
 ---
-
+<!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{siteTitle}</title>
-    <meta
-      name="description"
-      content="毎日の日本株市場を、むずかしすぎず・軽すぎず整理する相場ノート。日経平均、TOPIX、為替、米国市場、セクター動向を中心にまとめます。"
-    />
-  </head>
-
-  <body>
-    <div class="topbar">
-      毎日の日本株市場を、むずかしすぎず・軽すぎず整理する相場ノート
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>今日の日本株ノート</title>
+  <meta name="description" content="毎日の日本株市場を、むずかしすぎず・軽すぎず整理する相場ノート" />
+  <style>
+    :root {
+      --navy: #10233f;
+      --navy-2: #17375f;
+      --blue: #eaf2fb;
+      --blue-2: #f5f8fc;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ef;
+      --green: #12805c;
+      --red: #c2410c;
+      --yellow: #fff7d6;
+      --white: #ffffff;
+      --shadow: 0 14px 36px rgba(16, 35, 63, .08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 38%, #f8fafc 100%);
+      line-height: 1.8;
+    }
+    a { color: inherit; text-decoration: none; }
+    .topbar {
+      background: var(--navy);
+      color: #dce7f6;
+      font-size: 13px;
+      padding: 6px 20px;
+      text-align: center;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,.88);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--navy), #315d91);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 8px 22px rgba(16, 35, 63, .22);
+    }
+    nav {
+      display: flex;
+      gap: 18px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .hero {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 42px 24px 28px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, .72fr) minmax(260px, .48fr);
+      gap: 26px;
+      align-items: stretch;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, #10233f 0%, #17375f 58%, #24649c 100%);
+      color: #fff;
+      padding: 34px;
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      min-height: 360px;
+    }
+    .hero-card:after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      bottom: -80px;
+      width: 260px;
+      height: 260px;
+      border: 24px solid rgba(255,255,255,.08);
+      border-radius: 50%;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      font-size: 13px;
+      color: #dcecff;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.25;
+      letter-spacing: .03em;
+    }
+    .hero p {
+      margin: 0 0 24px;
+      color: #dce7f6;
+      font-size: 16px;
+      max-width: 620px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .btn-primary { background: #fff; color: var(--navy); }
+    .btn-secondary { border: 1px solid rgba(255,255,255,.36); color: #fff; }
+    .market-board, .desktop-brief {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .desktop-brief {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+    }
+    .desktop-brief h2 { margin: 0; color: var(--navy); font-size: 20px; }
+    .brief-card {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .brief-card b { display:block; color:var(--navy); margin-bottom:4px; }
+    .brief-card span { color:var(--muted); font-size:13px; line-height:1.6; }
+    .market-board h2 { margin: 0 0 14px; color: var(--navy); font-size: 20px; }
+    .mini-date { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .market-list { display: grid; gap: 10px; }
+    .market-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 9px;
+    }
+    .market-row:last-child { border-bottom: none; }
+    .label { color: var(--muted); font-size: 13px; }
+    .value { font-weight: 800; color: var(--navy); }
+    .plus { color: var(--green); }
+    .minus { color: var(--red); }
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 28px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 16px 0 14px;
+    }
+    .section-title h2 { margin: 0; font-size: 23px; color: var(--navy); letter-spacing: .02em; }
+    .section-title small { color: var(--muted); }
+    .latest-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 16px;
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge {
+      background: var(--blue);
+      color: var(--navy-2);
+      border: 1px solid #d5e5f8;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .latest-card h3 { margin: 0; font-size: 26px; line-height: 1.45; color: var(--navy); }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .summary-item {
+      background: var(--blue-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .summary-item .label { display: block; margin-bottom: 2px; }
+    .summary-item strong { font-size: 17px; color: var(--navy); }
+    .article-list { display: grid; gap: 14px; margin-top: 14px; }
+    .article-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: grid;
+      gap: 6px;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .article-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .article-meta { color: var(--muted); font-size: 13px; }
+    .article-item h3 { margin: 0; color: var(--navy); font-size: 18px; }
+    .article-item p { margin: 0; color: #4b5563; font-size: 14px; }
+    .note-box {
+      background: var(--yellow);
+      border: 1px solid #f1df98;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .note-box h3 { margin: 0 0 6px; color: #6b4e00; }
+    .note-box p { margin: 0; font-size: 14px; color: #604b12; }
+    aside { display: grid; gap: 18px; align-content: start; }
+    .side-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 10px 28px rgba(16,35,63,.05);
+    }
+    .side-card h3 { margin: 0 0 12px; color: var(--navy); font-size: 17px; }
+    .category-list { display: grid; gap: 8px; }
+    .category-list a {
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fbfdff;
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+    }
+    .profile { display: flex; gap: 12px; align-items: center; }
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #dcecff, #b8d7ff);
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: var(--navy);
+    }
+    .profile p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .footer {
+      margin-top: 48px;
+      background: var(--navy);
+      color: #dce7f6;
+      padding: 34px 20px;
+    }
+    .footer-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    @media (max-width: 1180px) {
+      .hero { grid-template-columns: 1.3fr .7fr; }
+      .desktop-brief { display: none; }
+    }
+    @media (max-width: 860px) {
+      nav { display: none; }
+      .hero { grid-template-columns: 1fr; padding-top: 26px; }
+      .hero-card { min-height: auto; padding: 28px 24px; }
+      .wrap { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .topbar { font-size: 12px; }
+      .header-inner { padding: 12px 16px; }
+      .brand { font-size: 15px; }
+      .brand-icon { width: 36px; height: 36px; font-size: 19px; }
+      .hero, .wrap { padding-left: 14px; padding-right: 14px; }
+      .hero-card { border-radius: 20px; }
+      .latest-card h3 { font-size: 21px; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">毎日の日本株市場を、むずかしすぎず・軽すぎず整理する相場ノート</div>
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="/">
+        <span class="brand-icon">▧</span>
+        <span>今日の日本株ノート</span>
+      </a>
+      <nav>
+        <a href="/blog">今日の相場</a>
+        <a href="/blog">深堀ノート</a>
+        <a href="/blog">日経ノート</a>
+        <a href="/blog">投資メモ</a>
+        <a href="/blog">用語解説</a>
+      </nav>
     </div>
+  </header>
 
-    <header>
-      <div class="header-inner">
-        <a class="brand" href="/">
-          <span class="brand-icon">▧</span>
-          <span>{siteTitle}</span>
-        </a>
-
-        <nav aria-label="メインメニュー">
-          <a href="#">今日の相場</a>
-          <a href="#">深堀ノート</a>
-          <a href="#">日経ノート</a>
-          <a href="#">投資メモ</a>
-          <a href="#">用語解説</a>
-        </nav>
+  <section class="hero">
+    <div class="hero-card">
+      <div class="eyebrow">最新マーケットメモ</div>
+      <h1>日本株の一日を、<br>やさしく整理する。</h1>
+      <p>日経平均、TOPIX、為替、米国市場、セクター動向を中心に、今日の相場と明日の注目点をノート形式でまとめます。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#latest">最新記事を読む</a>
+        <a class="btn btn-secondary" href="/about">このサイトについて</a>
       </div>
-    </header>
-
-    <section class="hero">
-      <div class="hero-card">
-        <div class="eyebrow">2026.05.08 更新｜最新マーケットメモ</div>
-        <h1>
-          日本株の一日を、<br />
-          やさしく整理する。
-        </h1>
-        <p>
-          日経平均、TOPIX、為替、米国市場、セクター動向を中心に、今日の相場と明日の注目点をノート形式でまとめます。
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#latest">最新記事を読む</a>
-          <a class="btn btn-secondary" href="#concept">このサイトについて</a>
-        </div>
+    </div>
+    <div class="market-board">
+      <h2>今日の相場サマリー</h2>
+      <div class="mini-date">サンプル表示</div>
+      <div class="market-list">
+        <div class="market-row"><span class="label">日経平均</span><span class="value plus">39,420円 +180円</span></div>
+        <div class="market-row"><span class="label">TOPIX</span><span class="value plus">2,745pt +0.6%</span></div>
+        <div class="market-row"><span class="label">ドル円</span><span class="value">154円台前半</span></div>
+        <div class="market-row"><span class="label">米国市場</span><span class="value plus">NASDAQ高</span></div>
+        <div class="market-row"><span class="label">注目テーマ</span><span class="value">半導体・銀行・自動車</span></div>
       </div>
+    </div>
+    <div class="desktop-brief">
+      <h2>朝のチェックポイント</h2>
+      <div class="mini-date">ワイド画面では補助情報を常時表示</div>
+      <div class="brief-card"><b>1. 米国市場</b><span>NASDAQと米長期金利の方向感を確認。</span></div>
+      <div class="brief-card"><b>2. 為替</b><span>輸出株・内需株への影響をざっくり整理。</span></div>
+      <div class="brief-card"><b>3. 決算・材料</b><span>寄り付き前に注目テーマを把握。</span></div>
+    </div>
+  </section>
 
-      <div class="market-board">
-        <h2>今日の相場サマリー</h2>
-        <div class="mini-date">サンプル表示｜2026年5月8日</div>
-
-        <div class="market-list">
-          {
-            marketSummary.map((item) => (
-              <div class="market-row">
-                <span class="label">{item.label}</span>
-                <span class={`value ${item.trend}`}>{item.value}</span>
-              </div>
-            ))
-          }
-        </div>
+  <main class="wrap">
+    <section>
+      <div class="section-title" id="latest">
+        <h2>最新の日本株ノート</h2>
+        <small>Daily Market Note</small>
       </div>
 
-      <div class="desktop-brief">
-        <h2>朝のチェックポイント</h2>
-        <div class="mini-date">ワイド画面では補助情報を常時表示</div>
+      {latestPost && (
+        <article class="latest-card">
+          <div class="badge-row">
+            <span class="badge">{latestPost.data.category || '日経ノート'}</span>
+          </div>
+          <h3>{latestPost.data.title}</h3>
+          <p>{latestPost.data.description}</p>
+          <a class="btn btn-primary" style="width:max-content;background:var(--navy);color:#fff;" href={`/blog/${latestPost.slug}`}>記事を読む</a>
+        </article>
+      )}
 
-        <div class="brief-card">
-          <b>1. 米国市場</b>
-          <span>NASDAQと米長期金利の方向感を確認。</span>
-        </div>
-        <div class="brief-card">
-          <b>2. 為替</b>
-          <span>輸出株・内需株への影響をざっくり整理。</span>
-        </div>
-        <div class="brief-card">
-          <b>3. 決算・材料</b>
-          <span>寄り付き前に注目テーマを把握。</span>
-        </div>
+      <div class="section-title">
+        <h2>記事一覧</h2>
+        <small>Recent Posts</small>
+      </div>
+      <div class="article-list">
+        {recentPosts.map(post => (
+          <a class="article-item" href={`/blog/${post.slug}`}>
+            <div class="article-meta">{post.data.pubDate.toLocaleDateString('ja-JP')}｜{post.data.category || '日経ノート'}</div>
+            <h3>{post.data.title}</h3>
+            <p>{post.data.description}</p>
+          </a>
+        ))}
+      </div>
+
+      <div class="note-box" id="concept">
+        <h3>このサイトの立ち位置</h3>
+        <p>短期売買をあおるサイトではなく、相場の流れを毎日整理し、翌営業日の見方を準備するための"相場ノート"です。</p>
       </div>
     </section>
 
-    <main class="wrap">
-      <section>
-        <div class="section-title" id="latest">
-          <h2>最新の日本株ノート</h2>
-          <small>Daily Market Note</small>
+    <aside>
+      <div class="side-card">
+        <h3>カテゴリー</h3>
+        <div class="category-list">
+          {Object.entries(categoryCounts).map(([cat, count]) => (
+            <a href="/blog">
+              <span>{cat}</span>
+              <span>{count}</span>
+            </a>
+          ))}
         </div>
-
-        <article class="latest-card">
-          <div class="badge-row">
-            <span class="badge">日経ノート</span>
-            <span class="badge">日経平均</span>
-            <span class="badge">為替</span>
-          </div>
-
-          <h3>【2026年5月8日】日経平均は続伸、米ハイテク株高と円安が支えに</h3>
-
-          <p>
-            本日の日本株市場は、前日の米国株高と為替の円安基調を背景に買いが先行。半導体関連や輸出関連に物色が向かる一方、決算発表を控えた様子見姿勢も残りました。
-          </p>
-
-          <div class="summary-grid">
-            <div class="summary-item">
-              <span class="label">日経平均</span>
-              <strong class="plus">+180円</strong>
-            </div>
-            <div class="summary-item">
-              <span class="label">TOPIX</span>
-              <strong class="plus">+0.6%</strong>
-            </div>
-            <div class="summary-item">
-              <span class="label">為替</span>
-              <strong>154円台</strong>
-            </div>
-            <div class="summary-item">
-              <span class="label">注目</span>
-              <strong>半導体</strong>
-            </div>
-          </div>
-
-          <a class="btn latest-button" href="#">記事を読む</a>
-        </article>
-
-        <div class="section-title">
-          <h2>記事一覧</h2>
-          <small>Recent Posts</small>
-        </div>
-
-        <div class="article-list">
-          {
-            articles.map((article) => (
-              <a class="article-item" href="#">
-                <div class="article-meta">
-                  {article.date}｜{article.category}
-                </div>
-                <h3>{article.title}</h3>
-                <p>{article.description}</p>
-              </a>
-            ))
-          }
-        </div>
-
-        <div class="note-box" id="concept">
-          <h3>このサイトの立ち位置</h3>
-          <p>
-            短期売買をあおるサイトではなく、相場の流れを毎日整理し、翌営業日の見方を準備するための“相場ノート”です。
-          </p>
-        </div>
-      </section>
-
-      <aside>
-        <div class="side-card">
-          <h3>カテゴリー</h3>
-          <div class="category-list">
-            {
-              categories.map((category) => (
-                <a href="#">
-                  <span>{category.name}</span>
-                  <span>{category.count}</span>
-                </a>
-              ))
-            }
-          </div>
-        </div>
-
-        <div class="side-card">
-          <h3>今週の注目テーマ</h3>
-          <div class="badge-row">
-            {themes.map((theme) => <span class="badge">{theme}</span>)}
-          </div>
-        </div>
-
-        <div class="side-card">
-          <h3>運営者メモ</h3>
-          <div class="profile">
-            <div class="avatar">株</div>
-            <p>
-              日本株市場の動きを、日々の投資判断の前提整理として読みやすくまとめます。
-            </p>
-          </div>
-        </div>
-
-        <div class="side-card">
-          <h3>免責事項</h3>
-          <p class="disclaimer">
-            当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。
-          </p>
-        </div>
-      </aside>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        <div>© {siteTitle}</div>
-        <div>このサイトについて｜免責事項｜プライバシーポリシー｜お問い合わせ</div>
       </div>
-    </footer>
-  </body>
+      <div class="side-card">
+        <h3>今週の注目テーマ</h3>
+        <div class="badge-row">
+          <span class="badge">決算発表</span>
+          <span class="badge">為替</span>
+          <span class="badge">半導体</span>
+          <span class="badge">銀行株</span>
+          <span class="badge">米金利</span>
+        </div>
+      </div>
+      <div class="side-card">
+        <h3>運営者メモ</h3>
+        <div class="profile">
+          <div class="avatar">株</div>
+          <p>日本株市場の動きを、日々の投資判断の前提整理として読みやすくまとめます。</p>
+        </div>
+      </div>
+      <div class="side-card">
+        <h3>免責事項</h3>
+        <p style="font-size:13px;color:var(--muted);margin:0;">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>© 今日の日本株ノート</div>
+      <div>
+        <a href="/about">このサイトについて</a>｜
+        <a href="/privacy">プライバシーポリシー</a>｜
+        <a href="/contact">お問い合わせ</a>
+      </div>
+    </div>
+  </footer>
+</body>
 </html>
-
-<style>
-  :root {
-    --navy: #10233f;
-    --navy-2: #17375f;
-    --blue: #eaf2fb;
-    --blue-2: #f5f8fc;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --border: #dbe3ef;
-    --green: #12805c;
-    --red: #c2410c;
-    --yellow: #fff7d6;
-    --white: #ffffff;
-    --shadow: 0 14px 36px rgba(16, 35, 63, 0.08);
-    --radius: 18px;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic",
-      "YuGothic", "Noto Sans JP", sans-serif;
-    color: var(--text);
-    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 38%, #f8fafc 100%);
-    line-height: 1.8;
-  }
-
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .topbar {
-    background: var(--navy);
-    color: #dce7f6;
-    font-size: 13px;
-    padding: 6px 20px;
-    text-align: center;
-  }
-
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.88);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .header-inner {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 800;
-    color: var(--navy);
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-  }
-
-  .brand-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--navy), #315d91);
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 22px;
-    box-shadow: 0 8px 22px rgba(16, 35, 63, 0.22);
-  }
-
-  nav {
-    display: flex;
-    gap: 18px;
-    color: #374151;
-    font-size: 14px;
-    font-weight: 600;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  nav a:hover {
-    color: var(--navy-2);
-  }
-
-  .hero {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 42px 24px 28px;
-    display: grid;
-    grid-template-columns:
-      minmax(0, 1.35fr)
-      minmax(330px, 0.72fr)
-      minmax(260px, 0.48fr);
-    gap: 26px;
-    align-items: stretch;
-  }
-
-  .hero-card {
-    background: linear-gradient(135deg, #10233f 0%, #17375f 58%, #24649c 100%);
-    color: #fff;
-    padding: 34px;
-    border-radius: 26px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    position: relative;
-    min-height: 360px;
-  }
-
-  .hero-card::after {
-    content: "";
-    position: absolute;
-    right: -80px;
-    bottom: -80px;
-    width: 260px;
-    height: 260px;
-    border: 24px solid rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-  }
-
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 999px;
-    font-size: 13px;
-    color: #dcecff;
-    margin-bottom: 20px;
-  }
-
-  .hero h1 {
-    margin: 0 0 14px;
-    font-size: clamp(30px, 4vw, 48px);
-    line-height: 1.25;
-    letter-spacing: 0.03em;
-  }
-
-  .hero p {
-    margin: 0 0 24px;
-    color: #dce7f6;
-    font-size: 16px;
-    max-width: 620px;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 11px 18px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 14px;
-  }
-
-  .btn-primary {
-    background: #fff;
-    color: var(--navy);
-  }
-
-  .btn-secondary {
-    border: 1px solid rgba(255, 255, 255, 0.36);
-    color: #fff;
-  }
-
-  .market-board,
-  .desktop-brief {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 26px;
-    padding: 24px;
-    box-shadow: var(--shadow);
-  }
-
-  .desktop-brief {
-    display: grid;
-    gap: 14px;
-    align-content: start;
-    background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
-  }
-
-  .desktop-brief h2,
-  .market-board h2 {
-    margin: 0 0 14px;
-    color: var(--navy);
-    font-size: 20px;
-  }
-
-  .brief-card {
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 16px;
-    padding: 14px;
-  }
-
-  .brief-card b {
-    display: block;
-    color: var(--navy);
-    margin-bottom: 4px;
-  }
-
-  .brief-card span {
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .mini-date {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 16px;
-  }
-
-  .market-list {
-    display: grid;
-    gap: 10px;
-  }
-
-  .market-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    border-bottom: 1px dashed var(--border);
-    padding-bottom: 9px;
-  }
-
-  .market-row:last-child {
-    border-bottom: none;
-  }
-
-  .label {
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .value {
-    font-weight: 800;
-    color: var(--navy);
-  }
-
-  .plus {
-    color: var(--green);
-  }
-
-  .minus {
-    color: var(--red);
-  }
-
-  .wrap {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
-    gap: 28px;
-  }
-
-  .section-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 16px 0 14px;
-  }
-
-  .section-title h2 {
-    margin: 0;
-    font-size: 23px;
-    color: var(--navy);
-    letter-spacing: 0.02em;
-  }
-
-  .section-title small {
-    color: var(--muted);
-  }
-
-  .latest-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow);
-    display: grid;
-    gap: 16px;
-  }
-
-  .badge-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .badge {
-    background: var(--blue);
-    color: var(--navy-2);
-    border: 1px solid #d5e5f8;
-    border-radius: 999px;
-    padding: 3px 10px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .latest-card h3 {
-    margin: 0;
-    font-size: 26px;
-    line-height: 1.45;
-    color: var(--navy);
-  }
-
-  .latest-card p {
-    margin: 0;
-  }
-
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-
-  .summary-item {
-    background: var(--blue-2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px;
-  }
-
-  .summary-item .label {
-    display: block;
-    margin-bottom: 2px;
-  }
-
-  .summary-item strong {
-    font-size: 17px;
-    color: var(--navy);
-  }
-
-  .summary-item strong.plus {
-    color: var(--green);
-  }
-
-  .latest-button {
-    width: max-content;
-    background: var(--navy);
-    color: #fff;
-  }
-
-  .article-list {
-    display: grid;
-    gap: 14px;
-    margin-top: 14px;
-  }
-
-  .article-item {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px;
-    display: grid;
-    gap: 6px;
-    transition:
-      transform 0.15s ease,
-      box-shadow 0.15s ease;
-  }
-
-  .article-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
-  }
-
-  .article-meta {
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .article-item h3 {
-    margin: 0;
-    color: var(--navy);
-    font-size: 18px;
-  }
-
-  .article-item p {
-    margin: 0;
-    color: #4b5563;
-    font-size: 14px;
-  }
-
-  .note-box {
-    background: var(--yellow);
-    border: 1px solid #f1df98;
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    margin-top: 20px;
-  }
-
-  .note-box h3 {
-    margin: 0 0 6px;
-    color: #6b4e00;
-  }
-
-  .note-box p {
-    margin: 0;
-    font-size: 14px;
-    color: #604b12;
-  }
-
-  aside {
-    display: grid;
-    gap: 18px;
-    align-content: start;
-  }
-
-  .side-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: 0 10px 28px rgba(16, 35, 63, 0.05);
-  }
-
-  .side-card h3 {
-    margin: 0 0 12px;
-    color: var(--navy);
-    font-size: 17px;
-  }
-
-  .category-list {
-    display: grid;
-    gap: 8px;
-  }
-
-  .category-list a {
-    display: flex;
-    justify-content: space-between;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
-    background: #fbfdff;
-    font-size: 14px;
-    font-weight: 700;
-    color: #374151;
-  }
-
-  .profile {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #dcecff, #b8d7ff);
-    display: grid;
-    place-items: center;
-    font-weight: 900;
-    color: var(--navy);
-    flex: 0 0 auto;
-  }
-
-  .profile p {
-    margin: 0;
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.65;
-  }
-
-  .disclaimer {
-    font-size: 13px;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  .footer {
-    margin-top: 48px;
-    background: var(--navy);
-    color: #dce7f6;
-    padding: 34px 20px;
-  }
-
-  .footer-inner {
-    max-width: 1440px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    gap: 18px;
-    flex-wrap: wrap;
-    font-size: 13px;
-  }
-
-  @media (max-width: 1180px) {
-    .hero {
-      grid-template-columns: 1.3fr 0.7fr;
-    }
-
-    .desktop-brief {
-      display: none;
-    }
-  }
-
-  @media (max-width: 860px) {
-    nav {
-      display: none;
-    }
-
-    .hero {
-      grid-template-columns: 1fr;
-      padding-top: 26px;
-    }
-
-    .hero-card {
-      min-height: auto;
-      padding: 28px 24px;
-    }
-
-    .wrap {
-      grid-template-columns: 1fr;
-    }
-
-    .summary-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 520px) {
-    .topbar {
-      font-size: 12px;
-    }
-
-    .header-inner {
-      padding: 12px 16px;
-    }
-
-    .brand {
-      font-size: 15px;
-    }
-
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      font-size: 19px;
-    }
-
-    .hero,
-    .wrap {
-      padding-left: 14px;
-      padding-right: 14px;
-    }
-
-    .hero-card {
-      border-radius: 20px;
-    }
-
-    .latest-card h3 {
-      font-size: 21px;
-    }
-
-    .summary-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
