@@ -2,7 +2,7 @@
 title: '記事タイトル'
 description: '記事の説明'
 pubDate: '2026-05-07'
-category: '日経ノート'
+category: 'nikkei'
 nikkei: '39,420円 +180円'
 nikkeiDate: '5月9日'
 topix: '2,745pt +0.6%'
