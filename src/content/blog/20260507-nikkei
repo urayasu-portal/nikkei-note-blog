@@ -3,6 +3,16 @@ title: '記事タイトル'
 description: '記事の説明'
 pubDate: '2026-05-07'
 category: '日経ノート'
+nikkei: '39,420円 +180円'
+nikkeiDate: '5月9日'
+topix: '2,745pt +0.6%'
+topixDate: '5月9日'
+usd: '154.20円'
+usdDate: '5月9日'
+dow: '41,368ドル +254ドル'
+dowDate: '5月8日'
+nasdaq: '17,928pt +169pt'
+nasdaqDate: '5月8日'
 ---
 <h2>日経平均は+3,320円、終値62,833円で最高値を更新</h2>
 
