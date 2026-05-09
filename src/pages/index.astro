@@ -8,6 +8,9 @@ const posts = (await getCollection('blog')).sort(
 const latestPost = posts[0];
 const recentPosts = posts.slice(1, 4);
 
+// 最新の日経ノートを取得
+const latestNikkeiNote = posts.find(post => post.data.category === '日経ノート');
+
 // カテゴリー集計
 const categoryCounts: Record<string, number> = {};
 posts.forEach(post => {
@@ -198,8 +201,9 @@ posts.forEach(post => {
       padding-bottom: 9px;
     }
     .market-row:last-child { border-bottom: none; }
-    .label { color: var(--muted); font-size: 13px; }
-    .value { font-weight: 800; color: var(--navy); }
+　　.label { color: var(--muted); font-size: 13px; }
+　　.label small { color: var(--muted); font-size: 11px; }
+　　.value { font-weight: 800; color: var(--navy); }
     .plus { color: var(--green); }
     .minus { color: var(--red); }
     .wrap {
@@ -373,15 +377,30 @@ posts.forEach(post => {
         <a class="btn btn-secondary" href="/about">このサイトについて</a>
       </div>
     </div>
-    <div class="market-board">
-      <h2>今日の相場サマリー</h2>
-      <div class="mini-date">サンプル表示</div>
+<div class="market-board">
+      <h2>相場サマリー</h2>
+      <div class="mini-date">最新記事投稿時の直近終値</div>
       <div class="market-list">
-        <div class="market-row"><span class="label">日経平均</span><span class="value plus">39,420円 +180円</span></div>
-        <div class="market-row"><span class="label">TOPIX</span><span class="value plus">2,745pt +0.6%</span></div>
-        <div class="market-row"><span class="label">ドル円</span><span class="value">154円台前半</span></div>
-        <div class="market-row"><span class="label">米国市場</span><span class="value plus">NASDAQ高</span></div>
-        <div class="market-row"><span class="label">注目テーマ</span><span class="value">半導体・銀行・自動車</span></div>
+        <div class="market-row">
+          <span class="label">日経平均<br><small>{latestNikkeiNote?.data.nikkeiDate}終値</small></span>
+          <span class="value plus">{latestNikkeiNote?.data.nikkei}</span>
+        </div>
+        <div class="market-row">
+          <span class="label">TOPIX<br><small>{latestNikkeiNote?.data.topixDate}終値</small></span>
+          <span class="value plus">{latestNikkeiNote?.data.topix}</span>
+        </div>
+        <div class="market-row">
+          <span class="label">ドル円<br><small>{latestNikkeiNote?.data.usdDate}15時30分</small></span>
+          <span class="value">{latestNikkeiNote?.data.usd}</span>
+        </div>
+        <div class="market-row">
+          <span class="label">NYダウ<br><small>{latestNikkeiNote?.data.dowDate}終値</small></span>
+          <span class="value plus">{latestNikkeiNote?.data.dow}</span>
+        </div>
+        <div class="market-row">
+          <span class="label">NASDAQ<br><small>{latestNikkeiNote?.data.nasdaqDate}終値</small></span>
+          <span class="value plus">{latestNikkeiNote?.data.nasdaq}</span>
+        </div>
       </div>
     </div>
     <div class="desktop-brief">
