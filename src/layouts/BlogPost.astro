@@ -1,85 +1,544 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  category,
+  nikkei,
+  nikkeiDate,
+  topix,
+  topixDate,
+  usd,
+  usdDate,
+  dow,
+  dowDate,
+  nasdaq,
+  nasdaqDate,
+} = Astro.props;
+
+const categoryLabel =
+  category === 'nikkei' ? '日経ノート' :
+  category === 'deep' ? '深堀ノート' :
+  category === 'memo' ? '投資メモ' :
+  category === 'glossary' ? '用語解説' :
+  category || '記事';
+
+const formattedDate = pubDate
+  ? `${pubDate.getFullYear()}年${pubDate.getMonth() + 1}月${pubDate.getDate()}日`
+  : '';
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
-	</head>
+<html lang="ja">
+  <head>
+    <BaseHead title={title} description={description} />
+    <style>
+      :root {
+        --navy: #10233f;
+        --navy-2: #17375f;
+        --blue: #eaf2fb;
+        --blue-2: #f5f8fc;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #dbe3ef;
+        --green: #12805c;
+        --red: #c2410c;
+        --white: #ffffff;
+        --shadow: 0 14px 36px rgba(16, 35, 63, .08);
+        --radius: 18px;
+      }
 
-	<body>
-		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+        color: var(--text);
+        background: linear-gradient(180deg, #f7fbff 0%, #ffffff 38%, #f8fafc 100%);
+        line-height: 1.85;
+      }
+
+      a { color: inherit; text-decoration: none; }
+
+      /* ヘッダー */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,.88);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        color: var(--navy);
+        font-size: 15px;
+        white-space: nowrap;
+      }
+
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--navy), #315d91);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 18px;
+      }
+
+      nav {
+        display: flex;
+        gap: 18px;
+        color: #374151;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      nav a:hover { color: var(--navy); }
+
+      /* パンくずリスト */
+      .breadcrumb {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 20px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .breadcrumb a { color: var(--navy); }
+      .breadcrumb span { color: var(--muted); }
+
+      /* メインレイアウト */
+      .layout {
+        max-width: 1200px;
+        margin: 24px auto 60px;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 28px;
+        align-items: start;
+      }
+
+      /* 記事本文エリア */
+      .article-wrap {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      /* 記事ヘッダー */
+      .article-header {
+        background: linear-gradient(135deg, #10233f 0%, #17375f 58%, #24649c 100%);
+        color: #fff;
+        padding: 32px 36px;
+      }
+
+      .article-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(255,255,255,.3);
+        border-radius: 999px;
+        padding: 3px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #dcecff;
+      }
+
+      .article-date {
+        color: #9ec4e8;
+        font-size: 13px;
+      }
+
+      .article-title {
+        font-size: clamp(20px, 3vw, 28px);
+        line-height: 1.45;
+        font-weight: 800;
+        letter-spacing: .02em;
+        margin-bottom: 16px;
+      }
+
+      .article-description {
+        color: #dce7f6;
+        font-size: 14px;
+        line-height: 1.75;
+        max-width: 680px;
+      }
+
+      /* 記事本文 */
+      .article-body {
+        padding: 36px;
+      }
+
+      .article-body :global(h2) {
+        font-size: 20px;
+        color: var(--navy);
+        margin: 36px 0 14px;
+        padding: 12px 16px;
+        background: var(--blue-2);
+        border-left: 4px solid var(--navy);
+        border-radius: 0 8px 8px 0;
+        line-height: 1.5;
+      }
+
+      .article-body :global(h2:first-child) {
+        margin-top: 0;
+      }
+
+      .article-body :global(h3) {
+        font-size: 17px;
+        color: var(--navy-2);
+        margin: 24px 0 10px;
+        padding-left: 12px;
+        border-left: 3px solid #5b8dd9;
+      }
+
+      .article-body :global(p) {
+        font-size: 15px;
+        color: var(--text);
+        margin-bottom: 16px;
+        line-height: 1.9;
+      }
+
+      .article-body :global(table) {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 14px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      .article-body :global(th) {
+        background: var(--navy);
+        color: #fff;
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .article-body :global(td) {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      .article-body :global(tr:last-child td) {
+        border-bottom: none;
+      }
+
+      .article-body :global(tr:nth-child(even) td) {
+        background: var(--blue-2);
+      }
+
+      .article-body :global(a) {
+        color: var(--navy);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .article-body :global(ul),
+      .article-body :global(ol) {
+        padding-left: 1.5em;
+        margin-bottom: 16px;
+      }
+
+      .article-body :global(li) {
+        font-size: 15px;
+        margin-bottom: 6px;
+        line-height: 1.8;
+      }
+
+      /* 深堀へのリンクボックス */
+      .deep-link-box {
+        background: linear-gradient(135deg, #eaf2fb, #f5f8fc);
+        border: 1px solid #c5d9f0;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-top: 28px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .deep-link-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--navy), #315d91);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .deep-link-text p {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .deep-link-text a {
+        color: var(--navy);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      /* サイドバー */
+      aside {
+        display: grid;
+        gap: 18px;
+        position: sticky;
+        top: 80px;
+      }
+
+      .side-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 10px 28px rgba(16,35,63,.05);
+      }
+
+      .side-card h3 {
+        margin: 0 0 14px;
+        color: var(--navy);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      /* 相場サマリー */
+      .market-list { display: grid; gap: 0; }
+
+      .market-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px dashed var(--border);
+        gap: 12px;
+      }
+
+      .market-row:last-child { border-bottom: none; }
+
+      .market-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .market-label small {
+        display: block;
+        font-size: 11px;
+        color: #9ca3af;
+      }
+
+      .market-value {
+        font-weight: 800;
+        font-size: 14px;
+        color: var(--navy);
+        text-align: right;
+      }
+
+      .plus { color: var(--green); }
+      .minus { color: var(--red); }
+
+      /* 関連記事 */
+      .related-list { display: grid; gap: 10px; }
+
+      .related-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        transition: box-shadow .15s;
+        display: block;
+      }
+
+      .related-item:hover { box-shadow: var(--shadow); }
+
+      .related-meta {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      .related-item h4 {
+        font-size: 13px;
+        color: var(--navy);
+        line-height: 1.5;
+      }
+
+      /* フッター */
+      footer {
+        background: var(--navy);
+        color: #dce7f6;
+        padding: 28px 20px;
+      }
+
+      .footer-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+
+      .footer-inner a { color: #9ec4e8; }
+
+      /* レスポンシブ */
+      @media (max-width: 860px) {
+        .layout { grid-template-columns: 1fr; }
+        aside { position: static; }
+        nav { display: none; }
+        .article-header { padding: 24px 20px; }
+        .article-body { padding: 24px 20px; }
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="header-inner">
+        <a class="brand" href="/">
+          <span class="brand-icon">▧</span>
+          <span>今日の日本株ノート</span>
+        </a>
+        <nav>
+          <a href="/blog">今日の相場</a>
+          <a href="/blog">深堀ノート</a>
+          <a href="/blog">日経ノート</a>
+          <a href="/blog">投資メモ</a>
+          <a href="/about">このサイトについて</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="breadcrumb">
+      <a href="/">ホーム</a>
+      <span>›</span>
+      <a href="/blog">記事一覧</a>
+      <span>›</span>
+      <span>{categoryLabel}</span>
+    </div>
+
+    <div class="layout">
+
+      <!-- 記事本文 -->
+      <main>
+        <article class="article-wrap">
+
+          <div class="article-header">
+            <div class="article-meta-row">
+              <span class="badge">{categoryLabel}</span>
+              <span class="article-date">{formattedDate}</span>
+            </div>
+            <h1 class="article-title">{title}</h1>
+            {description && <p class="article-description">{description}</p>}
+          </div>
+
+          <div class="article-body">
+            <slot />
+          </div>
+
+        </article>
+      </main>
+
+      <!-- サイドバー -->
+      <aside>
+
+        <!-- 相場サマリー（日経ノートのみ表示） -->
+        {category === 'nikkei' && nikkei && (
+          <div class="side-card">
+            <h3>この日の相場サマリー</h3>
+            <div class="market-list">
+              <div class="market-row">
+                <span class="market-label">日経平均<small>{nikkeiDate}終値</small></span>
+                <span class="market-value">{nikkei}</span>
+              </div>
+              <div class="market-row">
+                <span class="market-label">TOPIX<small>{topixDate}終値</small></span>
+                <span class="market-value">{topix}</span>
+              </div>
+              <div class="market-row">
+                <span class="market-label">ドル円<small>{usdDate} 15時30分</small></span>
+                <span class="market-value">{usd}</span>
+              </div>
+              <div class="market-row">
+                <span class="market-label">NYダウ<small>{dowDate}終値</small></span>
+                <span class="market-value">{dow}</span>
+              </div>
+              <div class="market-row">
+                <span class="market-label">NASDAQ<small>{nasdaqDate}終値</small></span>
+                <span class="market-value">{nasdaq}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <!-- トップへ戻る -->
+        <div class="side-card">
+          <h3>ナビゲーション</h3>
+          <div class="related-list">
+            <a class="related-item" href="/">
+              <div class="related-meta">トップページ</div>
+              <h4>今日の日本株ノート ホームへ</h4>
+            </a>
+            <a class="related-item" href="/blog">
+              <div class="related-meta">記事一覧</div>
+              <h4>全記事を見る</h4>
+            </a>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+    <footer>
+      <div class="footer-inner">
+        <div>© 今日の日本株ノート</div>
+        <div>
+          <a href="/about">このサイトについて</a>｜
+          <a href="/privacy">プライバシーポリシー</a>｜
+          <a href="/contact">お問い合わせ</a>
+        </div>
+      </div>
+    </footer>
+
+  </body>
 </html>
