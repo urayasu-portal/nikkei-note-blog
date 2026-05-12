@@ -96,6 +96,8 @@ const formattedDate = pubDate
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
+      html, body { overflow-x: hidden; }
+
       body {
         font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
         color: var(--text);
@@ -413,13 +415,24 @@ const formattedDate = pubDate
 
       .footer-inner a { color: #9ec4e8; }
 
+      /* テーブルのはみ出し防止 */
+      .article-body :global(table) {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
       /* レスポンシブ */
       @media (max-width: 860px) {
         .layout { grid-template-columns: 1fr; }
         aside { position: static; }
         nav { display: none; }
-        .article-header { padding: 24px 20px; }
-        .article-body { padding: 24px 20px; }
+        .article-header { padding: 24px 18px; }
+        .article-body { padding: 22px 18px; }
+        .article-body :global(h2) { font-size: 18px; padding: 10px 14px; }
+        .article-body :global(h3) { font-size: 16px; }
+        .article-body :global(p) { font-size: 16px; line-height: 1.85; }
+        .article-body :global(li) { font-size: 16px; }
       }
     </style>
   </head>

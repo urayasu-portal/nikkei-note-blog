@@ -39,6 +39,8 @@ const categoryLabel = (cat: string | undefined) => {
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
+      html, body { overflow-x: hidden; }
+
       body {
         font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
         color: var(--text);
@@ -189,6 +191,8 @@ const categoryLabel = (cat: string | undefined) => {
       @media (max-width: 860px) {
         nav { display: none; }
         .post-grid { grid-template-columns: 1fr; }
+        .post-title { font-size: 16px; }
+        .post-description { font-size: 14px; }
       }
     </style>
   </head>

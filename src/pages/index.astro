@@ -64,6 +64,9 @@ posts.forEach(post => {
       --radius: 18px;
     }
     * { box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+    }
     body {
       margin: 0;
       font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
@@ -401,6 +404,9 @@ posts.forEach(post => {
     @media (max-width: 860px) {
       nav { display: none; }
       .hamburger { display: flex; }
+      header { background: rgba(16, 35, 63, 0.97); border-bottom-color: rgba(255,255,255,.12); }
+      .brand { color: #ffffff; }
+      .hamburger span { background: #ffffff; }
       .hero { grid-template-columns: 1fr; padding-top: 26px; }
       .hero-card { min-height: auto; padding: 28px 24px; }
       .wrap { grid-template-columns: 1fr; }
