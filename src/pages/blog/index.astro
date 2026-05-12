@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../../components/BaseHead.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
 
@@ -47,56 +48,7 @@ const categoryLabel = (cat: string | undefined) => {
 
       a { color: inherit; text-decoration: none; }
 
-      /* ヘッダー */
-      header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        backdrop-filter: blur(12px);
-        background: rgba(255,255,255,.88);
-        border-bottom: 1px solid var(--border);
-      }
-
-      .header-inner {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 14px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 800;
-        color: var(--navy);
-        font-size: 15px;
-        white-space: nowrap;
-      }
-
-      .brand-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, var(--navy), #315d91);
-        display: grid;
-        place-items: center;
-        color: #fff;
-        font-size: 18px;
-      }
-
-      nav {
-        display: flex;
-        gap: 18px;
-        color: #374151;
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      nav a:hover { color: var(--navy); }
+      /* ヘッダーはSiteHeaderコンポーネントで管理 */
 
       /* パンくず */
       .breadcrumb {
@@ -242,21 +194,7 @@ const categoryLabel = (cat: string | undefined) => {
   </head>
   <body>
 
-    <header>
-      <div class="header-inner">
-        <a class="brand" href="/">
-          <span class="brand-icon">▧</span>
-          <span>今日の日本株ノート</span>
-        </a>
-        <nav>
-          <a href="/blog">今日の相場</a>
-          <a href="/blog/category/deep">深掘りノート</a>
-          <a href="/blog/category/nikkei">日経ノート</a>
-          <a href="/blog/category/memo">投資メモ</a>
-          <a href="/about">このサイトについて</a>
-        </nav>
-      </div>
-    </header>
+    <SiteHeader />
 
     <div class="breadcrumb">
       <a href="/">ホーム</a>

@@ -331,12 +331,59 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       flex-wrap: wrap;
       font-size: 13px;
     }
+    /* ハンバーガーボタン */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: var(--navy);
+      border-radius: 2px;
+      transition: transform 0.25s, opacity 0.25s;
+    }
+    .hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* モバイルナビ */
+    .mobile-nav {
+      display: none;
+      flex-direction: column;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 8px 0 16px;
+    }
+    .mobile-nav a {
+      display: block;
+      padding: 13px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      text-decoration: none;
+      border-bottom: 1px solid #f3f6fa;
+    }
+    .mobile-nav a:hover { background: #f7fbff; color: var(--navy); }
+    .mobile-nav.open { display: flex; }
+
     @media (max-width: 1180px) {
       .hero { grid-template-columns: 1.3fr .7fr; }
       .desktop-brief { display: none; }
     }
     @media (max-width: 860px) {
       nav { display: none; }
+      .hamburger { display: flex; }
       .hero { grid-template-columns: 1fr; padding-top: 26px; }
       .hero-card { min-height: auto; padding: 28px 24px; }
       .wrap { grid-template-columns: 1fr; }
@@ -364,13 +411,24 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       </a>
       <nav>
         <a href="/blog">今日の相場</a>
-        <a href="/blog">深堀ノート</a>
-        <a href="/blog">日経ノート</a>
-        <a href="/blog">投資メモ</a>
-        <a href="/blog">用語解説</a>
+        <a href="/blog/category/deep">深掘りノート</a>
+        <a href="/blog/category/nikkei">日経ノート</a>
+        <a href="/blog/category/memo">投資メモ</a>
+        <a href="/about">このサイトについて</a>
       </nav>
+      <button class="hamburger" aria-label="メニューを開く" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
+
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/blog">今日の相場</a>
+    <a href="/blog/category/deep">深掘りノート</a>
+    <a href="/blog/category/nikkei">日経ノート</a>
+    <a href="/blog/category/memo">投資メモ</a>
+    <a href="/about">このサイトについて</a>
+  </div>
 
   <section class="hero">
     <div class="hero-card">
@@ -513,5 +571,16 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       </div>
     </div>
   </footer>
+
+  <script>
+    const btn = document.querySelector('.hamburger');
+    const mobileNav = document.querySelector('.mobile-nav');
+    btn?.addEventListener('click', () => {
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!isOpen));
+      btn.setAttribute('aria-label', isOpen ? 'メニューを開く' : 'メニューを閉じる');
+      mobileNav?.classList.toggle('open', !isOpen);
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,189 @@
+---
+interface Props {
+  currentCategory?: string;
+}
+const { currentCategory } = Astro.props;
+---
+
+<header>
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-icon">▧</span>
+      <span>今日の日本株ノート</span>
+    </a>
+    <nav>
+      <a href="/blog">今日の相場</a>
+      <a href="/blog/category/deep" class={currentCategory === 'deep' ? 'active' : ''}>深掘りノート</a>
+      <a href="/blog/category/nikkei" class={currentCategory === 'nikkei' ? 'active' : ''}>日経ノート</a>
+      <a href="/blog/category/memo" class={currentCategory === 'memo' ? 'active' : ''}>投資メモ</a>
+      <a href="/about">このサイトについて</a>
+    </nav>
+    <button class="hamburger" aria-label="メニューを開く" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/blog">今日の相場</a>
+    <a href="/blog/category/deep">深掘りノート</a>
+    <a href="/blog/category/nikkei">日経ノート</a>
+    <a href="/blog/category/memo">投資メモ</a>
+    <a href="/about">このサイトについて</a>
+  </div>
+</header>
+
+<style>
+  :root {
+    --navy: #10233f;
+    --border: #dbe3ef;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    color: var(--navy);
+    font-size: 15px;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--navy), #315d91);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  nav {
+    display: flex;
+    gap: 18px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  nav a {
+    color: #374151;
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  nav a:hover,
+  nav a.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+  }
+
+  /* ハンバーガーボタン */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--navy);
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+
+  /* ×印へのアニメーション */
+  .hamburger[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* モバイルナビ */
+  .mobile-nav {
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 8px 0 16px;
+  }
+
+  .mobile-nav a {
+    display: block;
+    padding: 13px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    text-decoration: none;
+    border-bottom: 1px solid #f3f6fa;
+  }
+
+  .mobile-nav a:hover {
+    background: #f7fbff;
+    color: var(--navy);
+  }
+
+  .mobile-nav.open {
+    display: flex;
+  }
+
+  @media (max-width: 860px) {
+    nav {
+      display: none;
+    }
+    .hamburger {
+      display: flex;
+    }
+  }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('.hamburger');
+  const mobileNav = document.querySelector<HTMLElement>('.mobile-nav');
+
+  btn?.addEventListener('click', () => {
+    const isOpen = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    btn.setAttribute('aria-label', isOpen ? 'メニューを開く' : 'メニューを閉じる');
+    mobileNav?.classList.toggle('open', !isOpen);
+  });
+</script>
