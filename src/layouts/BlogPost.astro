@@ -47,7 +47,37 @@ const formattedDate = pubDate
 
 <html lang="ja">
   <head>
-    <BaseHead title={title} description={description} image={ogpImage} />
+    <BaseHead
+      title={title}
+      description={description}
+      image={ogpImage}
+      type="article"
+      pubDate={pubDate}
+      updatedDate={updatedDate}
+    />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": title,
+      "description": description,
+      "image": `https://nikkei-note.com${ogpImage}`,
+      "datePublished": pubDate?.toISOString(),
+      "dateModified": (updatedDate ?? pubDate)?.toISOString(),
+      "author": {
+        "@type": "Organization",
+        "name": "今日の日本株ノート",
+        "url": "https://nikkei-note.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "今日の日本株ノート",
+        "url": "https://nikkei-note.com"
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": Astro.url.href
+      }
+    })} />
     <style>
       :root {
         --navy: #10233f;
