@@ -12,15 +12,18 @@ const recentPosts = posts.slice(1, 4);
 const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
 
 // カテゴリー集計
-const categoryCounts: Record<string, number> = {};
-posts.forEach(post => {
-const categoryMap: Record<string, string> = {
-  'nikkei': '日経ノート',
-  'deep': '深堀ノート',
-  'memo': '投資メモ',
-  'glossary': '用語解説',
+const categoryMap: Record<string, { label: string; href: string }> = {
+  nikkei:   { label: '日経ノート',   href: '/blog/category/nikkei' },
+  deep:     { label: '深掘りノート', href: '/blog/category/deep' },
+  memo:     { label: '投資メモ',     href: '/blog/category/memo' },
+  glossary: { label: '用語解説',     href: '/blog/category/glossary' },
 };
-const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+const categoryCounts: Record<string, { label: string; href: string; count: number }> = {};
+posts.forEach(post => {
+  const key = post.data.category || '';
+  const info = categoryMap[key] ?? { label: '未分類', href: '/blog' };
+  if (!categoryCounts[key]) categoryCounts[key] = { ...info, count: 0 };
+  categoryCounts[key].count += 1;
 });
 ---
 <!doctype html>
@@ -487,7 +490,7 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
           <div class="badge-row">
             <span class="badge">{
   latestPost.data.category === 'nikkei' ? '日経ノート' :
-  latestPost.data.category === 'deep' ? '深堀ノート' :
+  latestPost.data.category === 'deep' ? '深掘りノート' :
   latestPost.data.category === 'memo' ? '投資メモ' :
   latestPost.data.category === 'glossary' ? '用語解説' :
   latestPost.data.category || '日経ノート'
@@ -495,7 +498,7 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
           </div>
           <h3>{latestPost.data.title}</h3>
           <p>{latestPost.data.description}</p>
-          <a class="btn btn-primary" style="width:max-content;background:var(--navy);color:#fff;" href={`/blog/${latestPost.slug}`}>記事を読む</a>
+          <a class="btn btn-primary" style="width:max-content;background:var(--navy);color:#fff;" href={`/blog/${latestPost.id}/`}>記事を読む</a>
         </article>
       )}
 
@@ -505,10 +508,10 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       </div>
       <div class="article-list">
         {recentPosts.map(post => (
-          <a class="article-item" href={`/blog/${post.slug}`}>
+          <a class="article-item" href={`/blog/${post.id}/`}>
 　　　　　　　<div class="article-meta">{post.data.pubDate.toLocaleDateString('ja-JP')}｜{
   　　　　　　　post.data.category === 'nikkei' ? '日経ノート' :
-　　　　　　　  post.data.category === 'deep' ? '深堀ノート' :
+　　　　　　　  post.data.category === 'deep' ? '深掘りノート' :
 　　　　　　　  post.data.category === 'memo' ? '投資メモ' :
 　　　　　　　  post.data.category === 'glossary' ? '用語解説' :
 　　　　　　　  post.data.category || '日経ノート'
@@ -529,10 +532,10 @@ const cat = categoryMap[post.data.category || ''] || '未分類';  categoryCount
       <div class="side-card">
         <h3>カテゴリー</h3>
         <div class="category-list">
-          {Object.entries(categoryCounts).map(([cat, count]) => (
-            <a href="/blog">
-              <span>{cat}</span>
-              <span>{count}</span>
+          {Object.entries(categoryCounts).map(([, info]) => (
+            <a href={info.href}>
+              <span>{info.label}</span>
+              <span>{info.count}</span>
             </a>
           ))}
         </div>
