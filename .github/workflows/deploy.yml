@@ -21,7 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and deploy
+      - name: Build
+        run: npm run build
+
+      - name: Deploy
         run: npm run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
