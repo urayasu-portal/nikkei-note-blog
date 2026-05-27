@@ -1,9 +1,10 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
 
 const {
   title,
@@ -22,6 +23,7 @@ const {
   dowDate,
   nasdaq,
   nasdaqDate,
+  readTimeMin,
 } = Astro.props;
 
 const categoryLabel =
@@ -29,9 +31,10 @@ const categoryLabel =
   category === 'deep' ? '深掘りノート' :
   category === 'memo' ? '投資メモ' :
   category === 'glossary' ? '用語解説' :
+  category === 'weekly' ? '週次振り返り' :
   category || '記事';
 
-// カテゴリー別OGP画像（SNSシェア用）
+// カテゴリー別OGP画像
 const ogpImageMap: Record<string, string> = {
   nikkei: '/blog-placeholder-1.jpg',
   deep:   '/blog-placeholder-2.jpg',
@@ -43,6 +46,35 @@ const ogpImage = heroImage ?? (category ? ogpImageMap[category] : undefined) ?? 
 const formattedDate = pubDate
   ? `${pubDate.getFullYear()}年${pubDate.getMonth() + 1}月${pubDate.getDate()}日`
   : '';
+
+// URL から slug を抽出してコンパニオン記事を検索
+const currentPath = Astro.url.pathname;
+const currentSlug = currentPath.replace(/^\/blog\//, '').replace(/\/$/, '');
+const datePrefix = currentSlug.match(/^(\d{8})/)?.[1] ?? '';
+
+const allPosts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// 通常版 ↔ 深掘り版のコンパニオン記事
+let companionPost: CollectionEntry<'blog'> | undefined;
+if (datePrefix) {
+  if (category === 'nikkei') {
+    companionPost = allPosts.find(p => p.id === `${datePrefix}-deep`);
+  } else if (category === 'deep') {
+    companionPost = allPosts.find(p => p.id === `${datePrefix}-nikkei`);
+  }
+}
+
+// 同カテゴリーの関連記事（現在記事を除く最新3件）
+const relatedPosts = allPosts
+  .filter(p => p.data.category === category && p.id !== currentSlug)
+  .slice(0, 3);
+
+// 用語解説記事（存在する場合のみ表示）
+const glossaryPosts = allPosts
+  .filter(p => p.data.category === 'glossary')
+  .slice(0, 4);
 ---
 
 <html lang="ja">
@@ -55,6 +87,8 @@ const formattedDate = pubDate
       pubDate={pubDate}
       updatedDate={updatedDate}
     />
+
+    <!-- BlogPosting 構造化データ -->
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "BlogPosting",
@@ -78,6 +112,19 @@ const formattedDate = pubDate
         "@id": Astro.url.href
       }
     })} />
+
+    <!-- パンくず構造化データ -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://nikkei-note.com" },
+        { "@type": "ListItem", "position": 2, "name": "記事一覧", "item": "https://nikkei-note.com/blog" },
+        { "@type": "ListItem", "position": 3, "name": categoryLabel, "item": `https://nikkei-note.com/blog/category/${category ?? 'nikkei'}` },
+        { "@type": "ListItem", "position": 4, "name": title, "item": Astro.url.href }
+      ]
+    })} />
+
     <style>
       :root {
         --navy: #10233f;
@@ -95,19 +142,14 @@ const formattedDate = pubDate
       }
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
-
       body { overflow-x: clip; }
-
       body {
         font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
         color: var(--text);
         background: linear-gradient(180deg, #f7fbff 0%, #ffffff 38%, #f8fafc 100%);
         line-height: 1.85;
       }
-
       a { color: inherit; text-decoration: none; }
-
-      /* パンくずリスト上のスペース調整 */
 
       /* パンくずリスト */
       .breadcrumb {
@@ -119,8 +161,8 @@ const formattedDate = pubDate
         gap: 8px;
         font-size: 13px;
         color: var(--muted);
+        flex-wrap: wrap;
       }
-
       .breadcrumb a { color: var(--navy); }
       .breadcrumb span { color: var(--muted); }
 
@@ -150,7 +192,6 @@ const formattedDate = pubDate
         color: #fff;
         padding: 32px 36px;
       }
-
       .article-meta-row {
         display: flex;
         align-items: center;
@@ -158,7 +199,6 @@ const formattedDate = pubDate
         margin-bottom: 16px;
         flex-wrap: wrap;
       }
-
       .badge {
         background: rgba(255,255,255,.18);
         border: 1px solid rgba(255,255,255,.3);
@@ -168,21 +208,25 @@ const formattedDate = pubDate
         font-weight: 700;
         color: #dcecff;
       }
-
       .article-date {
         color: #9ec4e8;
         font-size: 13px;
       }
-
+      .read-time {
+        color: #9ec4e8;
+        font-size: 12px;
+        padding: 2px 8px;
+        border: 1px solid rgba(158,196,232,.4);
+        border-radius: 999px;
+      }
       .article-title {
-  font-size: clamp(20px, 3vw, 28px);
-  line-height: 1.45;
-  font-weight: 800;
-  letter-spacing: .02em;
-  margin-bottom: 16px;
-  color: #ffffff;
-}
-
+        font-size: clamp(20px, 3vw, 28px);
+        line-height: 1.45;
+        font-weight: 800;
+        letter-spacing: .02em;
+        margin-bottom: 16px;
+        color: #ffffff;
+      }
       .article-description {
         color: #dce7f6;
         font-size: 14px;
@@ -190,11 +234,46 @@ const formattedDate = pubDate
         max-width: 680px;
       }
 
+      /* コンパニオン記事リンク（通常版↔深掘り版） */
+      .companion-box {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(135deg, #eaf2fb, #f5f8fc);
+        border: 1px solid #c5d9f0;
+        border-radius: 14px;
+        padding: 18px 22px;
+        margin: 24px 36px 0;
+      }
+      .companion-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--navy), #315d91);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 18px;
+        flex-shrink: 0;
+        font-weight: 900;
+      }
+      .companion-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .companion-link {
+        color: var(--navy);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
       /* 記事本文 */
       .article-body {
         padding: 36px;
       }
-
       .article-body :global(h2) {
         font-size: 20px;
         color: var(--navy);
@@ -205,11 +284,7 @@ const formattedDate = pubDate
         border-radius: 0 8px 8px 0;
         line-height: 1.5;
       }
-
-      .article-body :global(h2:first-child) {
-        margin-top: 0;
-      }
-
+      .article-body :global(h2:first-child) { margin-top: 0; }
       .article-body :global(h3) {
         font-size: 17px;
         color: var(--navy-2);
@@ -217,14 +292,12 @@ const formattedDate = pubDate
         padding-left: 12px;
         border-left: 3px solid #5b8dd9;
       }
-
       .article-body :global(p) {
         font-size: 15px;
         color: var(--text);
         margin-bottom: 16px;
         line-height: 1.9;
       }
-
       .article-body :global(table) {
         width: 100%;
         border-collapse: collapse;
@@ -233,8 +306,10 @@ const formattedDate = pubDate
         border-radius: 12px;
         overflow: hidden;
         border: 1px solid var(--border);
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-
       .article-body :global(th) {
         background: var(--navy);
         color: #fff;
@@ -242,76 +317,173 @@ const formattedDate = pubDate
         text-align: left;
         font-weight: 700;
         font-size: 13px;
+        white-space: nowrap;
       }
-
       .article-body :global(td) {
         padding: 10px 14px;
         border-bottom: 1px solid var(--border);
         vertical-align: top;
       }
-
-      .article-body :global(tr:last-child td) {
-        border-bottom: none;
-      }
-
-      .article-body :global(tr:nth-child(even) td) {
-        background: var(--blue-2);
-      }
-
+      .article-body :global(tr:last-child td) { border-bottom: none; }
+      .article-body :global(tr:nth-child(even) td) { background: var(--blue-2); }
       .article-body :global(a) {
         color: var(--navy);
         text-decoration: underline;
         text-underline-offset: 3px;
       }
-
       .article-body :global(ul),
       .article-body :global(ol) {
         padding-left: 1.5em;
         margin-bottom: 16px;
       }
-
       .article-body :global(li) {
         font-size: 15px;
         margin-bottom: 6px;
         line-height: 1.8;
       }
+      .article-body :global(hr) {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 28px 0;
+      }
+      .article-body :global(strong) { color: var(--navy); }
 
-      /* 深堀へのリンクボックス */
-      .deep-link-box {
-        background: linear-gradient(135deg, #eaf2fb, #f5f8fc);
-        border: 1px solid #c5d9f0;
-        border-radius: 14px;
-        padding: 20px 24px;
-        margin-top: 28px;
+      /* 記事末尾のコンパニオンリンク */
+      .companion-bottom {
         display: flex;
         align-items: center;
-        gap: 16px;
-      }
-
-      .deep-link-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--navy), #315d91);
-        display: grid;
-        place-items: center;
+        gap: 14px;
+        background: linear-gradient(135deg, #10233f 0%, #17375f 100%);
         color: #fff;
-        font-size: 20px;
-        flex-shrink: 0;
-      }
-
-      .deep-link-text p {
-        margin: 0 0 4px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-
-      .deep-link-text a {
-        color: var(--navy);
-        font-weight: 700;
-        font-size: 14px;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-top: 32px;
         text-decoration: none;
       }
+      .companion-bottom-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.15);
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        font-weight: 900;
+        flex-shrink: 0;
+      }
+      .companion-bottom-label {
+        font-size: 11px;
+        color: #9ec4e8;
+        margin-bottom: 3px;
+      }
+      .companion-bottom-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.5;
+      }
+
+      /* 関連記事セクション */
+      .related-section {
+        border-top: 1px solid var(--border);
+        margin-top: 36px;
+        padding-top: 28px;
+      }
+      .related-section h3 {
+        font-size: 17px;
+        color: var(--navy);
+        margin-bottom: 16px;
+        font-weight: 800;
+      }
+      .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .related-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        display: block;
+        transition: box-shadow .15s, transform .15s;
+        background: var(--blue-2);
+      }
+      .related-card:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+      }
+      .related-badge {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--navy-2);
+        background: var(--blue);
+        border-radius: 999px;
+        padding: 2px 8px;
+        display: inline-block;
+        margin-bottom: 6px;
+      }
+      .related-title {
+        font-size: 13px;
+        color: var(--navy);
+        line-height: 1.55;
+        font-weight: 600;
+      }
+
+      /* 用語解説リンク */
+      .glossary-section {
+        border-top: 1px solid var(--border);
+        margin-top: 24px;
+        padding-top: 20px;
+      }
+      .glossary-section h3 {
+        font-size: 15px;
+        color: var(--navy);
+        margin-bottom: 12px;
+        font-weight: 700;
+      }
+      .glossary-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .glossary-link {
+        font-size: 13px;
+        color: var(--navy);
+        background: var(--blue);
+        border: 1px solid #c5d9f0;
+        border-radius: 999px;
+        padding: 5px 14px;
+        transition: background .15s;
+      }
+      .glossary-link:hover { background: #d5e8f8; }
+
+      /* アフィリエイトCTA */
+      .aff-cta {
+        background: linear-gradient(135deg, #f7fbff, #eaf2fb);
+        border: 1px solid #c5d9f0;
+        border-radius: 14px;
+        padding: 22px 24px;
+        margin-top: 28px;
+      }
+      .aff-cta p {
+        font-size: 14px;
+        color: #374151;
+        margin-bottom: 12px;
+        line-height: 1.75;
+      }
+      .aff-cta-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--navy);
+        border: 1px solid #5b8dd9;
+        border-radius: 999px;
+        padding: 6px 16px;
+        transition: background .15s;
+      }
+      .aff-cta-link:hover { background: var(--blue); }
 
       /* サイドバー */
       aside {
@@ -320,7 +492,6 @@ const formattedDate = pubDate
         position: sticky;
         top: 80px;
       }
-
       .side-card {
         background: var(--white);
         border: 1px solid var(--border);
@@ -328,7 +499,6 @@ const formattedDate = pubDate
         padding: 20px;
         box-shadow: 0 10px 28px rgba(16,35,63,.05);
       }
-
       .side-card h3 {
         margin: 0 0 14px;
         color: var(--navy);
@@ -338,7 +508,6 @@ const formattedDate = pubDate
 
       /* 相場サマリー */
       .market-list { display: grid; gap: 0; }
-
       .market-row {
         display: flex;
         justify-content: space-between;
@@ -347,33 +516,27 @@ const formattedDate = pubDate
         border-bottom: 1px dashed var(--border);
         gap: 12px;
       }
-
       .market-row:last-child { border-bottom: none; }
-
       .market-label {
         font-size: 13px;
         color: var(--muted);
       }
-
       .market-label small {
         display: block;
         font-size: 11px;
         color: #9ca3af;
       }
-
       .market-value {
         font-weight: 800;
         font-size: 14px;
         color: var(--navy);
         text-align: right;
       }
-
       .plus { color: var(--green); }
       .minus { color: var(--red); }
 
-      /* 関連記事 */
+      /* サイドの関連記事 */
       .related-list { display: grid; gap: 10px; }
-
       .related-item {
         border: 1px solid var(--border);
         border-radius: 10px;
@@ -381,15 +544,12 @@ const formattedDate = pubDate
         transition: box-shadow .15s;
         display: block;
       }
-
       .related-item:hover { box-shadow: var(--shadow); }
-
       .related-meta {
         font-size: 11px;
         color: var(--muted);
         margin-bottom: 4px;
       }
-
       .related-item h4 {
         font-size: 13px;
         color: var(--navy);
@@ -402,7 +562,6 @@ const formattedDate = pubDate
         color: #dce7f6;
         padding: 28px 20px;
       }
-
       .footer-inner {
         max-width: 1200px;
         margin: 0 auto;
@@ -412,41 +571,36 @@ const formattedDate = pubDate
         flex-wrap: wrap;
         font-size: 13px;
       }
-
       .footer-inner a { color: #9ec4e8; }
-
-      /* テーブルのはみ出し防止 */
-      .article-body :global(table) {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
 
       /* レスポンシブ */
       @media (max-width: 860px) {
         .layout { grid-template-columns: 1fr; }
         aside { position: static; }
-        nav { display: none; }
         .article-header { padding: 24px 18px; }
+        .companion-box { margin: 16px 18px 0; padding: 14px 16px; }
         .article-body { padding: 22px 18px; }
         .article-body :global(h2) { font-size: 18px; padding: 10px 14px; }
         .article-body :global(h3) { font-size: 16px; }
         .article-body :global(p) { font-size: 16px; line-height: 1.85; }
         .article-body :global(li) { font-size: 16px; }
+        .related-grid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
 
   <body>
-
     <SiteHeader currentCategory={category} />
 
+    <!-- パンくずリスト -->
     <div class="breadcrumb">
       <a href="/">ホーム</a>
       <span>›</span>
       <a href="/blog">記事一覧</a>
       <span>›</span>
-      <span>{categoryLabel}</span>
+      <a href={`/blog/category/${category ?? 'nikkei'}`}>{categoryLabel}</a>
+      <span>›</span>
+      <span>{title}</span>
     </div>
 
     <div class="layout">
@@ -455,19 +609,102 @@ const formattedDate = pubDate
       <main>
         <article class="article-wrap">
 
+          <!-- 記事ヘッダー -->
           <div class="article-header">
             <div class="article-meta-row">
               <span class="badge">{categoryLabel}</span>
               <span class="article-date">{formattedDate}</span>
+              {updatedDate && (
+                <span class="article-date">更新: {updatedDate.getFullYear()}年{updatedDate.getMonth() + 1}月{updatedDate.getDate()}日</span>
+              )}
+              {readTimeMin && (
+                <span class="read-time">約{readTimeMin}分で読めます</span>
+              )}
             </div>
             <h1 class="article-title">{title}</h1>
             {description && <p class="article-description">{description}</p>}
           </div>
 
+          <!-- 通常版↔深掘り版 コンパニオンリンク（上部） -->
+          {companionPost && (
+            <div class="companion-box">
+              <div class="companion-icon">
+                {category === 'nikkei' ? '深' : '3'}
+              </div>
+              <div>
+                <p class="companion-label">
+                  {category === 'nikkei' ? 'さらに詳しく読む：深掘りノート' : '短く確認する：日経ノート（3分）'}
+                </p>
+                <a class="companion-link" href={`/blog/${companionPost.id}/`}>
+                  {companionPost.data.title}
+                </a>
+              </div>
+            </div>
+          )}
+
+          <!-- 記事本文 -->
           <div class="article-body">
             <slot />
-          </div>
 
+            <!-- 通常版↔深掘り版 コンパニオンリンク（本文末尾） -->
+            {companionPost && (
+              <a class="companion-bottom" href={`/blog/${companionPost.id}/`}>
+                <div class="companion-bottom-icon">
+                  {category === 'nikkei' ? '深' : '3'}
+                </div>
+                <div>
+                  <div class="companion-bottom-label">
+                    {category === 'nikkei' ? 'さらに詳しく読む' : '短く確認する（約3分）'}
+                  </div>
+                  <div class="companion-bottom-title">{companionPost.data.title}</div>
+                </div>
+              </a>
+            )}
+
+            <!-- 関連記事 -->
+            {relatedPosts.length > 0 && (
+              <div class="related-section">
+                <h3>あわせて読む</h3>
+                <div class="related-grid">
+                  {relatedPosts.map(post => (
+                    <a class="related-card" href={`/blog/${post.id}/`}>
+                      <div class="related-badge">{
+                        post.data.category === 'nikkei' ? '日経ノート' :
+                        post.data.category === 'deep' ? '深掘りノート' :
+                        post.data.category === 'memo' ? '投資メモ' :
+                        post.data.category === 'glossary' ? '用語解説' :
+                        post.data.category === 'weekly' ? '週次振り返り' :
+                        post.data.category ?? '記事'
+                      }</div>
+                      <div class="related-title">{post.data.title}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- 用語解説リンク -->
+            {glossaryPosts.length > 0 && (
+              <div class="glossary-section">
+                <h3>用語解説を確認する</h3>
+                <div class="glossary-links">
+                  {glossaryPosts.map(post => (
+                    <a class="glossary-link" href={`/blog/${post.id}/`}>{post.data.title}</a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- アフィリエイトCTA（nikkei・deep記事のみ） -->
+            {(category === 'nikkei' || category === 'deep') && (
+              <div class="aff-cta">
+                <p>日経平均を毎日チェックするなら、見やすい証券アプリを選ぶことも大切です。相場確認に使いやすいアプリの選び方をまとめた記事も、参考にしてみてください。</p>
+                <!-- 証券アプリ比較記事が公開されたらリンクをここに追加 -->
+                <!-- <a class="aff-cta-link" href="/blog/証券アプリ比較記事のslug/">相場確認に使いやすいアプリの選び方はこちら →</a> -->
+              </div>
+            )}
+
+          </div>
         </article>
       </main>
 
@@ -479,31 +716,56 @@ const formattedDate = pubDate
           <div class="side-card">
             <h3>この日の相場サマリー</h3>
             <div class="market-list">
-              <div class="market-row">
-                <span class="market-label">日経平均<small>{nikkeiDate}終値</small></span>
-                <span class="market-value">{nikkei}</span>
-              </div>
-              <div class="market-row">
-                <span class="market-label">TOPIX<small>{topixDate}終値</small></span>
-                <span class="market-value">{topix}</span>
-              </div>
-              <div class="market-row">
-                <span class="market-label">ドル円<small>{usdDate} 15時30分</small></span>
-                <span class="market-value">{usd}</span>
-              </div>
-              <div class="market-row">
-                <span class="market-label">NYダウ<small>{dowDate}終値</small></span>
-                <span class="market-value">{dow}</span>
-              </div>
-              <div class="market-row">
-                <span class="market-label">NASDAQ<small>{nasdaqDate}終値</small></span>
-                <span class="market-value">{nasdaq}</span>
-              </div>
+              {nikkei && (
+                <div class="market-row">
+                  <span class="market-label">日経平均<small>{nikkeiDate}終値</small></span>
+                  <span class="market-value">{nikkei}</span>
+                </div>
+              )}
+              {topix && (
+                <div class="market-row">
+                  <span class="market-label">TOPIX<small>{topixDate}終値</small></span>
+                  <span class="market-value">{topix}</span>
+                </div>
+              )}
+              {usd && (
+                <div class="market-row">
+                  <span class="market-label">ドル円<small>{usdDate} 15時30分</small></span>
+                  <span class="market-value">{usd}</span>
+                </div>
+              )}
+              {dow && (
+                <div class="market-row">
+                  <span class="market-label">NYダウ<small>{dowDate}終値</small></span>
+                  <span class="market-value">{dow}</span>
+                </div>
+              )}
+              {nasdaq && (
+                <div class="market-row">
+                  <span class="market-label">NASDAQ<small>{nasdaqDate}終値</small></span>
+                  <span class="market-value">{nasdaq}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        <!-- トップへ戻る -->
+        <!-- コンパニオン記事（サイドバー） -->
+        {companionPost && (
+          <div class="side-card">
+            <h3>{category === 'nikkei' ? '深掘りノート' : '日経ノート（3分）'}</h3>
+            <div class="related-list">
+              <a class="related-item" href={`/blog/${companionPost.id}/`}>
+                <div class="related-meta">
+                  {category === 'nikkei' ? '詳しく読む' : '短く確認する'}
+                </div>
+                <h4>{companionPost.data.title}</h4>
+              </a>
+            </div>
+          </div>
+        )}
+
+        <!-- ナビゲーション -->
         <div class="side-card">
           <h3>ナビゲーション</h3>
           <div class="related-list">
@@ -515,7 +777,20 @@ const formattedDate = pubDate
               <div class="related-meta">記事一覧</div>
               <h4>全記事を見る</h4>
             </a>
+            <a class="related-item" href="/blog/category/nikkei">
+              <div class="related-meta">カテゴリー</div>
+              <h4>日経ノート一覧</h4>
+            </a>
+            <a class="related-item" href="/blog/category/deep">
+              <div class="related-meta">カテゴリー</div>
+              <h4>深掘りノート一覧</h4>
+            </a>
           </div>
+        </div>
+
+        <!-- 免責事項 -->
+        <div class="side-card">
+          <p style="font-size:12px;color:var(--muted);line-height:1.7;">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
         </div>
 
       </aside>

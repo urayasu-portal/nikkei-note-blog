@@ -4,6 +4,9 @@
   License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
  */
 
+/* 編集者メモ・内部向けコンテンツは公開HTMLで非表示 */
+.editor-note { display: none !important; }
+
 :root {
 	--accent: #2337ff;
 	--accent-dark: #000d8a;

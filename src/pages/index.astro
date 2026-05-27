@@ -7,7 +7,7 @@ const posts = (await getCollection('blog')).sort(
 );
 
 const latestPost = posts[0];
-const recentPosts = posts.slice(1, 4);
+const recentPosts = posts.slice(1, 7);
 
 // 最新の日経ノートを取得
 const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
@@ -305,6 +305,67 @@ posts.forEach(post => {
     }
     .note-box h3 { margin: 0 0 6px; color: #6b4e00; }
     .note-box p { margin: 0; font-size: 14px; color: #604b12; }
+    /* 種別バッジ */
+    .badge-nikkei {
+      background: #eaf2fb;
+      color: #17375f;
+      border: 1px solid #c5d9f0;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-deep {
+      background: #10233f;
+      color: #dce7f6;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-memo {
+      background: #f3f0ff;
+      color: #4c1d95;
+      border: 1px solid #ddd6fe;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-weekly {
+      background: #fff7ed;
+      color: #92400e;
+      border: 1px solid #fed7aa;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    /* 種別ナビ */
+    .type-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .type-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      background: #fff;
+      min-width: 120px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      transition: box-shadow .15s;
+      text-align: center;
+    }
+    .type-nav-item:hover { box-shadow: var(--shadow); }
+    .type-nav-item small { font-size: 11px; color: var(--muted); font-weight: 400; }
     aside { display: grid; gap: 18px; align-content: start; }
     .side-card {
       background: #fff;
@@ -502,6 +563,27 @@ posts.forEach(post => {
 
   <main class="wrap">
     <section>
+
+      <!-- 種別ナビ -->
+      <div class="type-nav">
+        <a class="type-nav-item" href="/blog/category/nikkei">
+          <span>日経ノート</span>
+          <small>3分で読む・毎日更新</small>
+        </a>
+        <a class="type-nav-item" href="/blog/category/deep">
+          <span>深掘りノート</span>
+          <small>詳しく知りたい方へ</small>
+        </a>
+        <a class="type-nav-item" href="/blog/category/memo">
+          <span>投資メモ</span>
+          <small>注目テーマを整理</small>
+        </a>
+        <a class="type-nav-item" href="/blog">
+          <span>すべての記事</span>
+          <small>一覧を見る</small>
+        </a>
+      </div>
+
       <div class="section-title" id="latest">
         <h2>最新の日本株ノート</h2>
         <small>Daily Market Note</small>
@@ -510,13 +592,21 @@ posts.forEach(post => {
       {latestPost && (
         <article class="latest-card">
           <div class="badge-row">
-            <span class="badge">{
-  latestPost.data.category === 'nikkei' ? '日経ノート' :
-  latestPost.data.category === 'deep' ? '深掘りノート' :
-  latestPost.data.category === 'memo' ? '投資メモ' :
-  latestPost.data.category === 'glossary' ? '用語解説' :
-  latestPost.data.category || '日経ノート'
-}</span>
+            <span class={
+              latestPost.data.category === 'nikkei' ? 'badge-nikkei' :
+              latestPost.data.category === 'deep' ? 'badge-deep' :
+              latestPost.data.category === 'memo' ? 'badge-memo' :
+              'badge'
+            }>{
+              latestPost.data.category === 'nikkei' ? '3分 | 日経ノート' :
+              latestPost.data.category === 'deep' ? '詳しく | 深掘りノート' :
+              latestPost.data.category === 'memo' ? '投資メモ' :
+              latestPost.data.category === 'glossary' ? '用語解説' :
+              latestPost.data.category || '記事'
+            }</span>
+            <span style="font-size:13px;color:var(--muted);">
+              {latestPost.data.pubDate.getFullYear()}年{latestPost.data.pubDate.getMonth() + 1}月{latestPost.data.pubDate.getDate()}日
+            </span>
           </div>
           <h3>{latestPost.data.title}</h3>
           <p>{latestPost.data.description}</p>
@@ -531,14 +621,26 @@ posts.forEach(post => {
       <div class="article-list">
         {recentPosts.map(post => (
           <a class="article-item" href={`/blog/${post.id}/`}>
-　　　　　　　<div class="article-meta">{post.data.pubDate.toLocaleDateString('ja-JP')}｜{
-  　　　　　　　post.data.category === 'nikkei' ? '日経ノート' :
-　　　　　　　  post.data.category === 'deep' ? '深掘りノート' :
-　　　　　　　  post.data.category === 'memo' ? '投資メモ' :
-　　　　　　　  post.data.category === 'glossary' ? '用語解説' :
-　　　　　　　  post.data.category || '日経ノート'
-　　　　}</div>
-<h3>{post.data.title}</h3>
+            <div class="article-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class={
+                post.data.category === 'nikkei' ? 'badge-nikkei' :
+                post.data.category === 'deep' ? 'badge-deep' :
+                post.data.category === 'memo' ? 'badge-memo' :
+                post.data.category === 'weekly' ? 'badge-weekly' :
+                'badge'
+              }>{
+                post.data.category === 'nikkei' ? '3分 | 日経ノート' :
+                post.data.category === 'deep' ? '詳しく | 深掘りノート' :
+                post.data.category === 'memo' ? '投資メモ' :
+                post.data.category === 'weekly' ? '週次振り返り' :
+                post.data.category === 'glossary' ? '用語解説' :
+                post.data.category || '記事'
+              }</span>
+              <span style="font-size:12px;color:var(--muted);">
+                {post.data.pubDate.getFullYear()}年{post.data.pubDate.getMonth() + 1}月{post.data.pubDate.getDate()}日
+              </span>
+            </div>
+            <h3>{post.data.title}</h3>
             <p>{post.data.description}</p>
           </a>
         ))}
