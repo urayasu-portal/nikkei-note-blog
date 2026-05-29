@@ -12,6 +12,9 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@resvg/resvg-js": "^2.6.2",
+		"satori": "^0.12.1",
+		"satori-html": "^0.3.2",
 		"@astrojs/cloudflare": "12.6.12",
 		"@astrojs/mdx": "4.3.13",
 		"@astrojs/rss": "4.0.14",

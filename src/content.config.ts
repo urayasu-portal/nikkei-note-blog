@@ -11,6 +11,12 @@ const blog = defineCollection({
 		updatedDate: z.coerce.date().optional(),
 		heroImage: z.string().optional(),
 		category: z.string().optional(),
+		ogData: z.object({
+			date: z.string(),
+			nikkei: z.string(),
+			nikkeiChange: z.string(),
+			nikkeiPct: z.string(),
+		}).optional(),
 		nikkei: z.string().optional(),
 		nikkeiDate: z.string().optional(),
 		topix: z.string().optional(),

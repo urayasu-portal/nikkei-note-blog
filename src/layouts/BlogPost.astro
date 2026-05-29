@@ -34,15 +34,6 @@ const categoryLabel =
   category === 'weekly' ? '週次振り返り' :
   category || '記事';
 
-// カテゴリー別OGP画像
-const ogpImageMap: Record<string, string> = {
-  nikkei: '/blog-placeholder-1.jpg',
-  deep:   '/blog-placeholder-2.jpg',
-  memo:   '/blog-placeholder-3.jpg',
-  glossary: '/blog-placeholder-4.jpg',
-};
-const ogpImage = heroImage ?? (category ? ogpImageMap[category] : undefined) ?? '/blog-placeholder-1.jpg';
-
 const formattedDate = pubDate
   ? `${pubDate.getFullYear()}年${pubDate.getMonth() + 1}月${pubDate.getDate()}日`
   : '';
@@ -50,6 +41,11 @@ const formattedDate = pubDate
 // URL から slug を抽出してコンパニオン記事を検索
 const currentPath = Astro.url.pathname;
 const currentSlug = currentPath.replace(/^\/blog\//, '').replace(/\/$/, '');
+
+// OGP画像：slug があれば生成済みPNGを使用、なければプレースホルダー
+const ogpImage = currentSlug
+  ? `/og/${currentSlug}.png`
+  : (heroImage ?? '/blog-placeholder-1.jpg');
 const datePrefix = currentSlug.match(/^(\d{8})/)?.[1] ?? '';
 
 const allPosts = (await getCollection('blog')).sort(
