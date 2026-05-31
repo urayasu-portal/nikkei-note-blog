@@ -32,7 +32,7 @@ const monthCountsJson = JSON.stringify(monthCounts);
   </div>
 </div>
 
-<style>
+<style is:global>
   .cal-widget {
     background: #fff;
     border: 1px solid var(--border, #dbe3ef);
@@ -41,58 +41,58 @@ const monthCountsJson = JSON.stringify(monthCounts);
     box-shadow: 0 10px 28px rgba(16,35,63,.05);
   }
   .cal-widget h3 { margin: 0 0 14px; color: var(--navy, #10233f); font-size: 16px; font-weight: 800; }
-  #nk-calendar { user-select: none; }
-  .cal-header {
+  .cal-widget #nk-calendar { user-select: none; }
+  .cal-widget .cal-header {
     display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
   }
-  .cal-month-label { font-weight: 800; color: var(--navy); font-size: 15px; }
-  .cal-nav {
-    background: none; border: 1px solid var(--border); border-radius: 8px;
-    width: 28px; height: 28px; cursor: pointer; font-size: 15px; color: var(--navy);
+  .cal-widget .cal-month-label { font-weight: 800; color: var(--navy, #10233f); font-size: 15px; }
+  .cal-widget .cal-nav {
+    background: none; border: 1px solid var(--border, #dbe3ef); border-radius: 8px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 15px; color: var(--navy, #10233f);
     display: grid; place-items: center; transition: background .12s;
   }
-  .cal-nav:hover { background: var(--blue); }
-  .cal-grid {
+  .cal-widget .cal-nav:hover { background: var(--blue, #eaf2fb); }
+  .cal-widget .cal-grid {
     display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; text-align: center;
   }
-  .cal-dow { font-size: 11px; font-weight: 700; color: var(--muted); padding: 3px 0; }
-  .cal-dow.sun { color: #dc2626; }
-  .cal-dow.sat { color: #2563eb; }
-  .cal-day {
+  .cal-widget .cal-dow { font-size: 11px; font-weight: 700; color: var(--muted, #6b7280); padding: 3px 0; }
+  .cal-widget .cal-dow.sun { color: #dc2626; }
+  .cal-widget .cal-dow.sat { color: #2563eb; }
+  .cal-widget .cal-day {
     font-size: 12px; padding: 4px 1px; border-radius: 7px; min-height: 28px;
-    line-height: 20px; cursor: default; color: var(--text); transition: background .1s;
+    line-height: 20px; cursor: default; color: var(--text, #1f2937); transition: background .1s;
     position: relative;
   }
-  .cal-day.has-post { font-weight: 700; color: var(--navy); cursor: pointer; }
-  .cal-day.has-post::after {
+  .cal-widget .cal-day.has-post { font-weight: 700; color: var(--navy, #10233f); cursor: pointer; }
+  .cal-widget .cal-day.has-post::after {
     content: ""; display: block; width: 5px; height: 5px; border-radius: 50%;
-    background: var(--navy-2); margin: 1px auto 0;
+    background: var(--navy-2, #17375f); margin: 1px auto 0;
   }
-  .cal-day.multi::after { background: #e53e3e; width: 6px; height: 6px; }
-  .cal-day.has-post:hover { background: var(--blue); }
-  .cal-day.is-today {
-    background: var(--navy); color: #fff; font-weight: 800;
+  .cal-widget .cal-day.multi::after { background: #e53e3e; width: 6px; height: 6px; }
+  .cal-widget .cal-day.has-post:hover { background: var(--blue, #eaf2fb); }
+  .cal-widget .cal-day.is-today {
+    background: var(--navy, #10233f); color: #fff; font-weight: 800;
   }
-  .cal-day.is-today::after { background: #60a5fa; }
-  .cal-day.is-today:hover { background: var(--navy-2); }
-  .cal-day.sun-col { color: #dc2626; }
-  .cal-day.sat-col { color: #2563eb; }
-  .cal-day.has-post.sun-col { color: #dc2626; }
-  .cal-day.has-post.sat-col { color: #2563eb; }
-  .cal-footer {
+  .cal-widget .cal-day.is-today::after { background: #60a5fa; }
+  .cal-widget .cal-day.is-today:hover { background: var(--navy-2, #17375f); }
+  .cal-widget .cal-day.sun-col { color: #dc2626; }
+  .cal-widget .cal-day.sat-col { color: #2563eb; }
+  .cal-widget .cal-day.has-post.sun-col { color: #dc2626; }
+  .cal-widget .cal-day.has-post.sat-col { color: #2563eb; }
+  .cal-widget .cal-footer {
     margin-top: 10px; display: flex; align-items: center;
     justify-content: space-between; font-size: 12px; gap: 8px;
   }
-  .cal-legend { display: flex; align-items: center; gap: 5px; color: var(--muted); }
-  .cal-legend-dot {
+  .cal-widget .cal-legend { display: flex; align-items: center; gap: 5px; color: var(--muted, #6b7280); }
+  .cal-widget .cal-legend-dot {
     display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--navy-2); flex-shrink: 0;
+    background: var(--navy-2, #17375f); flex-shrink: 0;
   }
-  .cal-month-link {
-    color: var(--navy-2); font-weight: 700; text-decoration: none;
+  .cal-widget .cal-month-link {
+    color: var(--navy-2, #17375f); font-weight: 700; text-decoration: none;
     font-size: 12px; white-space: nowrap;
   }
-  .cal-month-link:hover { text-decoration: underline; }
+  .cal-widget .cal-month-link:hover { text-decoration: underline; }
 </style>
 
 <script define:vars={{ postDates, multiDates, monthCountsJson }}>
