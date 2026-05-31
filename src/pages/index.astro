@@ -13,6 +13,17 @@ const recentPosts = posts.slice(1, 7);
 // 最新の日経ノートを取得
 const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
 
+// weeklyThemes / checkPoints を持つ最新記事から取得（なければデフォルト値）
+const latestWithThemes = posts.find(p => p.data.weeklyThemes && p.data.weeklyThemes.length > 0);
+const weeklyThemes = latestWithThemes?.data.weeklyThemes ?? ['決算発表','為替','半導体','銀行株','米金利'];
+
+const latestWithCP = posts.find(p => p.data.checkPoints && p.data.checkPoints.length > 0);
+const checkPoints = latestWithCP?.data.checkPoints ?? [
+  { title: '米国市場',  text: 'NASDAQと米長期金利の方向感を確認。' },
+  { title: '為替',      text: '輸出株・内需株への影響をざっくり整理。' },
+  { title: '決算・材料', text: '寄り付き前に注目テーマを把握。' },
+];
+
 // カテゴリー集計
 const categoryMap: Record<string, { label: string; href: string }> = {
   nikkei:   { label: '日経ノート',   href: '/blog/category/nikkei' },
@@ -556,9 +567,9 @@ posts.forEach(post => {
     <div class="desktop-brief">
       <h2>朝のチェックポイント</h2>
       <div class="mini-date">ワイド画面では補助情報を常時表示</div>
-      <div class="brief-card"><b>1. 米国市場</b><span>NASDAQと米長期金利の方向感を確認。</span></div>
-      <div class="brief-card"><b>2. 為替</b><span>輸出株・内需株への影響をざっくり整理。</span></div>
-      <div class="brief-card"><b>3. 決算・材料</b><span>寄り付き前に注目テーマを把握。</span></div>
+      {checkPoints.map((cp, i) => (
+        <div class="brief-card"><b>{i + 1}. {cp.title}</b><span>{cp.text}</span></div>
+      ))}
     </div>
   </section>
 
@@ -669,11 +680,9 @@ posts.forEach(post => {
       <div class="side-card">
         <h3>今週の注目テーマ</h3>
         <div class="badge-row">
-          <span class="badge">決算発表</span>
-          <span class="badge">為替</span>
-          <span class="badge">半導体</span>
-          <span class="badge">銀行株</span>
-          <span class="badge">米金利</span>
+          {weeklyThemes.map(theme => (
+            <span class="badge">{theme}</span>
+          ))}
         </div>
       </div>
       <div class="side-card">

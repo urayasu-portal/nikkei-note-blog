@@ -27,6 +27,12 @@ const blog = defineCollection({
 		dowDate: z.string().optional(),
 		nasdaq: z.string().optional(),
 		nasdaqDate: z.string().optional(),
+		// トップページ自動更新用
+		weeklyThemes: z.array(z.string()).optional(),
+		checkPoints: z.array(z.object({
+			title: z.string(),
+			text:  z.string(),
+		})).optional(),
 	}),
 });
 
