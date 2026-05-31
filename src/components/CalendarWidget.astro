@@ -1,0 +1,180 @@
+---
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog');
+
+// 投稿日セット (YYYY-MM-DD)
+const dateCounts: Record<string, number> = {};
+for (const post of allPosts) {
+  const ds = post.data.pubDate.toISOString().slice(0, 10);
+  dateCounts[ds] = (dateCounts[ds] ?? 0) + 1;
+}
+const postDates  = JSON.stringify(Object.keys(dateCounts));
+const multiDates = JSON.stringify(Object.keys(dateCounts).filter(d => dateCounts[d] >= 2));
+
+// 月別件数
+const monthCounts: Record<string, number> = {};
+for (const post of allPosts) {
+  const mk = post.data.pubDate.toISOString().slice(0, 7);
+  monthCounts[mk] = (monthCounts[mk] ?? 0) + 1;
+}
+const monthCountsJson = JSON.stringify(monthCounts);
+---
+
+<div class="side-card cal-widget">
+  <h3>📅 カレンダーで探す</h3>
+  <div id="nk-calendar"></div>
+  <div class="cal-footer">
+    <div class="cal-legend">
+      <span class="cal-legend-dot"></span> 記事あり
+    </div>
+    <a id="nk-month-link" class="cal-month-link" href="/blog/">この月の記事を見る →</a>
+  </div>
+</div>
+
+<style>
+  .cal-widget {
+    background: #fff;
+    border: 1px solid var(--border, #dbe3ef);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 28px rgba(16,35,63,.05);
+  }
+  .cal-widget h3 { margin: 0 0 14px; color: var(--navy, #10233f); font-size: 16px; font-weight: 800; }
+  #nk-calendar { user-select: none; }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .cal-month-label { font-weight: 800; color: var(--navy); font-size: 15px; }
+  .cal-nav {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 15px; color: var(--navy);
+    display: grid; place-items: center; transition: background .12s;
+  }
+  .cal-nav:hover { background: var(--blue); }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; text-align: center;
+  }
+  .cal-dow { font-size: 11px; font-weight: 700; color: var(--muted); padding: 3px 0; }
+  .cal-dow.sun { color: #dc2626; }
+  .cal-dow.sat { color: #2563eb; }
+  .cal-day {
+    font-size: 12px; padding: 4px 1px; border-radius: 7px; min-height: 28px;
+    line-height: 20px; cursor: default; color: var(--text); transition: background .1s;
+    position: relative;
+  }
+  .cal-day.has-post { font-weight: 700; color: var(--navy); cursor: pointer; }
+  .cal-day.has-post::after {
+    content: ""; display: block; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--navy-2); margin: 1px auto 0;
+  }
+  .cal-day.multi::after { background: #e53e3e; width: 6px; height: 6px; }
+  .cal-day.has-post:hover { background: var(--blue); }
+  .cal-day.is-today {
+    background: var(--navy); color: #fff; font-weight: 800;
+  }
+  .cal-day.is-today::after { background: #60a5fa; }
+  .cal-day.is-today:hover { background: var(--navy-2); }
+  .cal-day.sun-col { color: #dc2626; }
+  .cal-day.sat-col { color: #2563eb; }
+  .cal-day.has-post.sun-col { color: #dc2626; }
+  .cal-day.has-post.sat-col { color: #2563eb; }
+  .cal-footer {
+    margin-top: 10px; display: flex; align-items: center;
+    justify-content: space-between; font-size: 12px; gap: 8px;
+  }
+  .cal-legend { display: flex; align-items: center; gap: 5px; color: var(--muted); }
+  .cal-legend-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--navy-2); flex-shrink: 0;
+  }
+  .cal-month-link {
+    color: var(--navy-2); font-weight: 700; text-decoration: none;
+    font-size: 12px; white-space: nowrap;
+  }
+  .cal-month-link:hover { text-decoration: underline; }
+</style>
+
+<script define:vars={{ postDates, multiDates, monthCountsJson }}>
+(function () {
+  const POST_DATES   = new Set(JSON.parse(postDates));
+  const MULTI_DATES  = new Set(JSON.parse(multiDates));
+  const MONTH_COUNTS = JSON.parse(monthCountsJson);
+  const today = new Date();
+  let y = today.getFullYear(), m = today.getMonth();
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function render(ry, rm) {
+    y = ry; m = rm;
+    const wrap = document.getElementById('nk-calendar');
+    if (!wrap) return;
+    const firstDay    = new Date(ry, rm, 1).getDay();
+    const daysInMonth = new Date(ry, rm + 1, 0).getDate();
+    const mn = pad(rm + 1);
+    const mk = `${ry}-${mn}`;
+    const dows = ['日','月','火','水','木','金','土'];
+    const dowCls = ['sun','','','','','','sat'];
+
+    let html = `<div class="cal-header">
+      <button class="cal-nav" id="nk-cal-prev" aria-label="前の月">‹</button>
+      <span class="cal-month-label">${ry}年${rm + 1}月</span>
+      <button class="cal-nav" id="nk-cal-next" aria-label="次の月">›</button>
+    </div><div class="cal-grid">`;
+
+    dows.forEach((d, i) => {
+      html += `<div class="cal-dow${dowCls[i] ? ' ' + dowCls[i] : ''}">${d}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds  = `${ry}-${mn}-${pad(d)}`;
+      const dow = (firstDay + d - 1) % 7;
+      const hasPost = POST_DATES.has(ds);
+      const isMulti = MULTI_DATES.has(ds);
+      const isToday = (ry === today.getFullYear() && rm === today.getMonth() && d === today.getDate());
+      let cls = 'cal-day';
+      if (isToday)  cls += ' is-today';
+      if (hasPost)  cls += ' has-post';
+      if (isMulti)  cls += ' multi';
+      if (dow === 0) cls += ' sun-col';
+      if (dow === 6) cls += ' sat-col';
+      const click = hasPost ? ` data-date="${ds}"` : '';
+      html += `<div class="${cls}"${click}>${d}</div>`;
+    }
+    html += '</div>';
+    wrap.innerHTML = html;
+
+    // ボタンイベント
+    document.getElementById('nk-cal-prev')?.addEventListener('click', () => {
+      let nm = m - 1, ny = y;
+      if (nm < 0) { nm = 11; ny--; }
+      render(ny, nm);
+    });
+    document.getElementById('nk-cal-next')?.addEventListener('click', () => {
+      let nm = m + 1, ny = y;
+      if (nm > 11) { nm = 0; ny++; }
+      render(ny, nm);
+    });
+
+    // 日付クリック
+    wrap.querySelectorAll('.cal-day.has-post').forEach(el => {
+      el.addEventListener('click', () => {
+        const ds = el.getAttribute('data-date');
+        if (ds) window.location.href = `/blog/?date=${ds}`;
+      });
+    });
+
+    // フッターリンク
+    const count = MONTH_COUNTS[mk] || 0;
+    const link  = document.getElementById('nk-month-link');
+    if (link) {
+      link.href = `/blog/?month=${mk}`;
+      link.textContent = `この月の記事(${count}件)を見る →`;
+    }
+  }
+
+  render(y, m);
+})();
+</script>

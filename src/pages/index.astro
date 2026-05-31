@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
+import CalendarWidget from '../components/CalendarWidget.astro';
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -653,6 +654,7 @@ posts.forEach(post => {
     </section>
 
     <aside>
+      <CalendarWidget />
       <div class="side-card">
         <h3>カテゴリー</h3>
         <div class="category-list">
