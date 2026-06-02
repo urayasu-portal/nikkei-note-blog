@@ -194,6 +194,18 @@ posts.forEach(post => {
       max-width: 620px;
     }
     .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-divider { height: 1px; background: rgba(255,255,255,.2); margin: 22px 0 14px; }
+    .hero-nav-label { font-size: 11px; color: rgba(255,255,255,.5); letter-spacing: .08em; margin-bottom: 10px; }
+    .hero-type-nav { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+    .hero-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.22);
+      border-radius: 12px; padding: 10px 16px; min-width: 108px;
+      font-size: 13px; font-weight: 700; color: #fff;
+      transition: background .15s; text-align: center;
+    }
+    .hero-nav-item:hover { background: rgba(255,255,255,.24); }
+    .hero-nav-item small { font-size: 11px; color: rgba(255,255,255,.6); font-weight: 400; }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -537,6 +549,26 @@ posts.forEach(post => {
         <a class="btn btn-primary" href="#latest">最新記事を読む</a>
         <a class="btn btn-secondary" href="/about">このサイトについて</a>
       </div>
+      <div class="hero-divider"></div>
+      <div class="hero-nav-label">記事を探す</div>
+      <div class="hero-type-nav">
+        <a class="hero-nav-item" href="/blog/category/nikkei">
+          <span>日経ノート</span>
+          <small>3分で読む・毎日更新</small>
+        </a>
+        <a class="hero-nav-item" href="/blog/category/deep">
+          <span>深掘りノート</span>
+          <small>詳しく知りたい方へ</small>
+        </a>
+        <a class="hero-nav-item" href="/blog/category/memo">
+          <span>投資メモ</span>
+          <small>注目テーマを整理</small>
+        </a>
+        <a class="hero-nav-item" href="/blog">
+          <span>すべての記事</span>
+          <small>一覧を見る</small>
+        </a>
+      </div>
     </div>
 <div class="market-board">
       <h2>相場サマリー</h2>
@@ -575,26 +607,6 @@ posts.forEach(post => {
 
   <main class="wrap">
     <section>
-
-      <!-- 種別ナビ -->
-      <div class="type-nav">
-        <a class="type-nav-item" href="/blog/category/nikkei">
-          <span>日経ノート</span>
-          <small>3分で読む・毎日更新</small>
-        </a>
-        <a class="type-nav-item" href="/blog/category/deep">
-          <span>深掘りノート</span>
-          <small>詳しく知りたい方へ</small>
-        </a>
-        <a class="type-nav-item" href="/blog/category/memo">
-          <span>投資メモ</span>
-          <small>注目テーマを整理</small>
-        </a>
-        <a class="type-nav-item" href="/blog">
-          <span>すべての記事</span>
-          <small>一覧を見る</small>
-        </a>
-      </div>
 
       <div class="section-title" id="latest">
         <h2>最新の日本株ノート</h2>
