@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日の日本株ノート 記事投稿ツール</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', 'Yu Gothic', sans-serif;
+      background: #eef2f7; color: #333; line-height: 1.6; min-height: 100vh;
+    }
+    .container { max-width: 760px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    .app-header { margin-bottom: 24px; }
+    .app-header h1 { font-size: 1.35rem; color: #1a4f7a; margin-bottom: 4px; }
+    .app-header p  { font-size: 0.85rem; color: #666; }
+
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px 22px;
+      margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .card-title { font-size: 0.9rem; font-weight: bold; color: #333; margin-bottom: 12px; }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
+
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #d5dbe3; border-radius: 8px;
+      font-size: 16px; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s; background: #fafbfc;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+      outline: none; border-color: #2980b9;
+      box-shadow: 0 0 0 3px rgba(41,128,185,0.12); background: #fff;
+    }
+    textarea {
+      resize: vertical; font-family: 'SFMono-Regular','Consolas','Menlo',monospace;
+      font-size: 0.83rem; line-height: 1.55;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 15px; border: none; border-radius: 7px;
+      cursor: pointer; font-size: 0.85rem; font-weight: bold;
+      transition: background 0.18s, transform 0.1s; white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-ghost { background: #edf0f3; color: #555; }
+    .btn-ghost:hover { background: #dde2e8; }
+    .btn-blue  { background: #2980b9; color: #fff; }
+    .btn-blue:hover  { background: #2471a3; }
+    .btn-submit {
+      width: 100%; padding: 15px; background: #27ae60; color: #fff;
+      font-size: 1.05rem; font-weight: bold; border: none; border-radius: 10px;
+      cursor: pointer; transition: background 0.18s, transform 0.1s, box-shadow 0.18s;
+      box-shadow: 0 4px 14px rgba(39,174,96,0.25);
+    }
+    .btn-submit:hover   { background: #229954; box-shadow: 0 6px 18px rgba(39,174,96,0.3); }
+    .btn-submit:active  { transform: scale(0.98); }
+    .btn-submit:disabled { background: #aaa; box-shadow: none; cursor: not-allowed; }
+
+    .row { display: flex; gap: 8px; align-items: flex-start; }
+    .row input { flex: 1; }
+
+    details summary {
+      cursor: pointer; font-size: 0.88rem; font-weight: bold; color: #555;
+      user-select: none; list-style: none;
+    }
+    details summary::before { content: '▶ '; font-size: 0.7rem; }
+    details[open] summary::before { content: '▼ '; }
+    .pat-body { margin-top: 14px; }
+    .pat-ok { font-size: 0.8rem; color: #27ae60; margin-top: 6px; display: none; }
+
+    #status {
+      margin-top: 18px; padding: 15px 18px; border-radius: 10px;
+      font-size: 0.9rem; line-height: 1.7; display: none;
+    }
+    #status.success { background: #d5f5e3; color: #186a3b; border: 1px solid #a9dfbf; display: block; }
+    #status.error   { background: #fadbd8; color: #922b21; border: 1px solid #f1948a; display: block; }
+    #status.loading { background: #d6eaf8; color: #1a5276; border: 1px solid #a9cce3; display: block; }
+    #status a { color: inherit; font-weight: bold; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: bold;
+      background: #eaf3fb; color: #2980b9; margin-left: 8px; vertical-align: middle;
+    }
+
+    #parsedInfo {
+      margin-top: 10px; padding: 10px 14px; background: #f0f7ff;
+      border-radius: 8px; font-size: 0.82rem; color: #2c5f8a; display: none;
+    }
+    #parsedInfo strong { color: #1a4f7a; }
+
+    @media (max-width: 480px) {
+      .app-header h1 { font-size: 1.15rem; }
+      .card { padding: 16px; }
+      .btn-submit { font-size: 0.95rem; padding: 14px; }
+      .row { flex-wrap: wrap; }
+      .row input { min-width: 0; }
+      .row .btn { width: 100%; }
+      textarea { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="app-header">
+    <h1>📈 今日の日本株ノート 記事投稿ツール</h1>
+    <p>AIが生成した .md ファイル内容を貼り付けて、GitHubに直接投稿します</p>
+  </div>
+
+  <!-- PAT設定 -->
+  <div class="card">
+    <details id="patDetails">
+      <summary>⚙️ GitHub トークン設定</summary>
+      <div class="pat-body">
+        <label class="card-title" style="margin-bottom:8px;">Personal Access Token</label>
+        <div class="row">
+          <input type="password" id="patInput" placeholder="github_pat_xxxxxxxxxxxx または ghp_xxxxxxxxxxxx">
+          <button class="btn btn-blue" onclick="savePat()">保存</button>
+        </div>
+        <p class="hint">
+          GitHub → Settings → Developer settings → Personal access tokens (Fine-grained) で発行。<br>
+          権限：<strong>Contents: Read and write</strong> のみ必要。設定はこのブラウザにのみ保存されます。
+        </p>
+        <div class="pat-ok" id="patOk">✅ トークンが保存されています</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- .md内容 -->
+  <div class="card">
+    <div class="card-title">
+      📋 .md ファイル内容
+      <span class="badge">フロントマター＋本文をそのまま貼り付け</span>
+    </div>
+    <textarea id="content" rows="20"
+      placeholder="---
+title: &quot;2026年6月3日の日経225動向&quot;
+date: 2026-06-03T07:00:00+09:00
+slug: &quot;20260603-nikkei&quot;
+description: &quot;本日の日経平均の動きと注目銘柄&quot;
+draft: false
+---
+本文..."></textarea>
+    <p class="hint">
+      記事カテゴリ別ファイル名：日経ノート → YYYYMMDD-nikkei.md／深掘り → YYYYMMDD-deep.md／投資メモ → YYYYMMDD-memo.md／週次振り返り → YYYYMMDD-weekly.md
+    </p>
+    <div id="parsedInfo"></div>
+  </div>
+
+  <!-- ファイル名 -->
+  <div class="card">
+    <div class="card-title">📄 ファイル名</div>
+    <div class="row">
+      <input type="text" id="filename" placeholder="20260603-nikkei.md">
+      <button class="btn btn-ghost" onclick="autoFillFilename()">🔄 自動入力</button>
+    </div>
+    <p class="hint">形式：YYYYMMDD-[nikkei|deep|memo|weekly].md　上の内容を貼り付けてから「自動入力」を押すと date と slug から自動生成されます。</p>
+  </div>
+
+  <!-- 投稿ボタン -->
+  <button class="btn-submit" id="submitBtn" onclick="submitArticle()">
+    🚀 GitHub に投稿する
+  </button>
+
+  <div id="status"></div>
+
+</div>
+<script>
+  const OWNER  = 'urayasu-portal';
+  const REPO   = 'nikkei-note-blog';
+  const BRANCH = 'main';
+
+  /* ── 初期化 ── */
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('nikkei_gh_pat');
+    if (saved) {
+      document.getElementById('patInput').value = saved;
+      document.getElementById('patOk').style.display = 'block';
+    } else {
+      document.getElementById('patDetails').open = true;
+    }
+    document.getElementById('content').addEventListener('input', updateParsedInfo);
+  });
+
+  /* ── PAT ── */
+  function savePat() {
+    const pat = document.getElementById('patInput').value.trim();
+    if (!pat) { showStatus('error', '⚠️ トークンを入力してください'); return; }
+    localStorage.setItem('nikkei_gh_pat', pat);
+    document.getElementById('patOk').style.display = 'block';
+    document.getElementById('patDetails').open = false;
+    showStatus('success', '✅ トークンを保存しました');
+  }
+
+  /* ── フロントマターパース ── */
+  function parseFrontmatter(text) {
+    const dateMatch  = text.match(/^date:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
+    const slugMatch  = text.match(/^slug:\s*["']?([a-z0-9][a-z0-9-]*)["']?/m);
+    const titleMatch = text.match(/^title:\s*["'](.+?)["']\s*$/m);
+    return {
+      date:  dateMatch  ? `${dateMatch[1]}${dateMatch[2]}${dateMatch[3]}` : null,
+      slug:  slugMatch  ? slugMatch[1] : null,
+      title: titleMatch ? titleMatch[1] : null,
+    };
+  }
+
+  function updateParsedInfo() {
+    const content = document.getElementById('content').value;
+    const info = document.getElementById('parsedInfo');
+    if (!content.includes('---')) { info.style.display = 'none'; return; }
+    const { date, slug, title } = parseFrontmatter(content);
+    if (!date && !slug && !title) { info.style.display = 'none'; return; }
+    const parts = [];
+    if (title) parts.push(`<strong>タイトル：</strong>${escHtml(title)}`);
+    if (date)  parts.push(`<strong>日付：</strong>${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`);
+    if (slug)  parts.push(`<strong>スラッグ：</strong>${escHtml(slug)}`);
+    if (date && slug) parts.push(`<strong>推奨ファイル名：</strong>${date}-${slug}.md`);
+    info.innerHTML = parts.join('　　');
+    info.style.display = 'block';
+  }
+
+  /* ── ファイル名自動入力 ── */
+  function autoFillFilename() {
+    const content = document.getElementById('content').value.trim();
+    if (!content) { showStatus('error', '⚠️ 先に .md ファイル内容を貼り付けてください'); return; }
+    const { date, slug } = parseFrontmatter(content);
+    if (date && slug) {
+      document.getElementById('filename').value = `${date}-${slug}.md`;
+    } else if (slug) {
+      document.getElementById('filename').value = `${slug}.md`;
+      showStatus('error', '⚠️ date が見つからなかったため slug のみでファイル名を設定しました');
+    } else {
+      showStatus('error', '⚠️ slug / date が見つかりませんでした');
+    }
+  }
+
+  /* ── GitHub API ヘッダー ── */
+  function makeHeaders(pat) {
+    return {
+      'Authorization': `Bearer ${pat}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  /* ── 記事（.md）投稿 ── */
+  async function submitArticle() {
+    const pat      = localStorage.getItem('nikkei_gh_pat');
+    const content  = document.getElementById('content').value;
+    const filename = document.getElementById('filename').value.trim();
+    const btn      = document.getElementById('submitBtn');
+
+    if (!pat) {
+      showStatus('error', '⚠️ GitHubトークンが未設定です');
+      document.getElementById('patDetails').open = true;
+      return;
+    }
+    if (!filename || !filename.endsWith('.md')) {
+      showStatus('error', '⚠️ ファイル名を確認してください（YYYYMMDD-[nikkei|deep|memo|weekly].md 形式）');
+      return;
+    }
+    if (!/^\d{8}-/.test(filename)) {
+      showStatus('error', '⚠️ ファイル名は YYYYMMDD- で始まる必要があります');
+      return;
+    }
+    if (!content.trim() || !content.includes('---')) {
+      showStatus('error', '⚠️ .mdファイル内容を確認してください（フロントマターが必要）');
+      return;
+    }
+
+    btn.disabled = true;
+    showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...');
+
+    try {
+      const path   = `src/content/blog/${filename}`;
+      const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
+      const hdrs   = makeHeaders(pat);
+      const { title } = parseFrontmatter(content);
+      const commitMsg = title ? `feat: ${title}` : `feat: ${filename.replace('.md','')}を追加`;
+
+      let sha;
+      const check = await fetch(apiUrl, { headers: hdrs });
+      if (check.ok) { sha = (await check.json()).sha; }
+
+      const body = { message: commitMsg, content: toBase64(content), branch: BRANCH };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(apiUrl, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+
+      if (res.ok) {
+        const action  = sha ? '更新' : '新規投稿';
+        const slug    = filename.replace(/^\d{8}-/, '').replace('.md', '');
+        const ghUrl   = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${path}`;
+        const siteUrl = `https://nikkei-note.com/blog/${slug}/`;
+        showStatus('success',
+          `✅ ${action}しました！\n` +
+          `📄 <strong>${filename}</strong>\n` +
+          `🔗 <a href="${ghUrl}" target="_blank" rel="noopener">GitHubで確認する</a>\n` +
+          `🌐 ビルド完了後（約1〜2分）：<a href="${siteUrl}" target="_blank" rel="noopener">記事ページを開く</a>`
+        );
+        document.getElementById('filename').value = '';
+        document.getElementById('content').value  = '';
+        document.getElementById('parsedInfo').style.display = 'none';
+
+      } else {
+        const err = await res.json().catch(()=>({}));
+        const msgs = {
+          401: '❌ 認証エラー（401）：トークンが無効または期限切れです',
+          403: '❌ 権限エラー（403）：Contents: Read and write 権限を確認してください',
+          404: '❌ 見つかりません（404）：リポジトリ名・トークン権限を確認してください',
+          422: `❌ バリデーションエラー（422）：${err.message || ''}`,
+        };
+        showStatus('error', msgs[res.status] || `❌ エラー（${res.status}）：${err.message || '投稿に失敗しました'}`);
+      }
+
+    } catch(e) {
+      showStatus('error', `❌ 通信エラー：${e.message}`);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ── ユーティリティ ── */
+  function toBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function showStatus(type, message) {
+    const el = document.getElementById('status');
+    el.className = `status ${type}`;
+    el.innerHTML = message.replace(/\n/g, '<br>');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>
