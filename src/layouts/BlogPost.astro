@@ -137,7 +137,8 @@ const glossaryPosts = allPosts
       }
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { overflow-x: clip; }
+      html { overflow-x: hidden; max-width: 100%; }
+      body { overflow-x: hidden; max-width: 100%; }
       body {
         font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
         color: var(--text);
@@ -570,50 +571,63 @@ const glossaryPosts = allPosts
 
       /* レスポンシブ */
       @media (max-width: 860px) {
+        /* 全要素の横幅を viewport 内に収める */
+        .breadcrumb,
+        .layout,
+        .article-wrap,
+        .article-header,
+        .companion-box,
+        .article-body,
+        aside {
+          max-width: 100%;
+          width: 100%;
+        }
+
         .layout {
           grid-template-columns: 1fr;
-          padding: 0 12px;       /* 左右余白を統一 */
+          padding: 0 12px;
           margin-top: 12px;
+          margin-bottom: 32px;
         }
         aside { position: static; }
 
-        /* 横幅はみ出し防止 */
-        .article-wrap { overflow: hidden; width: 100%; }
-        .article-title {
-          font-size: 18px;
+        /* 長いテキストを強制折り返し */
+        .article-title,
+        .article-description,
+        .companion-link,
+        .companion-bottom-title,
+        .article-body :global(*) {
           word-break: break-word;
-          overflow-wrap: break-word;
+          overflow-wrap: anywhere;
         }
 
         /* ① descriptionをモバイルで非表示 */
         .article-description { display: none; }
 
-        /* ヘッダーのパディングを縮小 */
+        /* ヘッダー */
         .article-header { padding: 18px 16px 16px; }
+        .article-title { font-size: 18px; }
 
-        /* ② パンくずの記事タイトルを非表示（カテゴリーまでに短縮） */
+        /* ② パンくずの記事タイトルを非表示 */
         .breadcrumb-title { display: none; }
         .breadcrumb-sep-title { display: none; }
         .breadcrumb { padding: 10px 12px 0; }
 
         /* ③ コンパニオンボックスをスリム化 */
         .companion-box {
-          margin: 10px 16px 0;
+          margin: 10px 0 0;
           padding: 9px 12px;
           border-radius: 0 8px 8px 0;
+          border: none;
           border-left: 3px solid #5b8dd9;
-          border-top: none; border-right: none; border-bottom: none;
           background: #f0f6fd;
           gap: 10px;
         }
-        .companion-icon {
-          width: 28px; height: 28px;
-          border-radius: 7px; font-size: 12px;
-        }
+        .companion-icon { width: 28px; height: 28px; border-radius: 7px; font-size: 12px; }
         .companion-label { font-size: 11px; margin-bottom: 2px; }
         .companion-link { font-size: 13px; }
 
-        /* ④ 本文フォントサイズ（読みやすいサイズに） */
+        /* ④ 本文フォントサイズ */
         .article-body { padding: 18px 16px; }
         .article-body :global(h2) { font-size: 17px; padding: 10px 13px; margin: 22px 0 10px; }
         .article-body :global(h3) { font-size: 15px; }
