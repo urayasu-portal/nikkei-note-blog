@@ -572,13 +572,41 @@ const glossaryPosts = allPosts
       @media (max-width: 860px) {
         .layout { grid-template-columns: 1fr; }
         aside { position: static; }
-        .article-header { padding: 24px 18px; }
-        .companion-box { margin: 16px 18px 0; padding: 14px 16px; }
-        .article-body { padding: 22px 18px; }
-        .article-body :global(h2) { font-size: 18px; padding: 10px 14px; }
-        .article-body :global(h3) { font-size: 16px; }
-        .article-body :global(p) { font-size: 16px; line-height: 1.85; }
-        .article-body :global(li) { font-size: 16px; }
+
+        /* ① descriptionをモバイルで非表示 */
+        .article-description { display: none; }
+
+        /* ヘッダーのパディングを縮小 */
+        .article-header { padding: 14px 12px 12px; }
+
+        /* ② パンくずの記事タイトルを非表示（カテゴリーまでに短縮） */
+        .breadcrumb-title { display: none; }
+        .breadcrumb-sep-title { display: none; }
+
+        /* ③ コンパニオンボックスをスリム化 */
+        .companion-box {
+          margin: 8px 12px 0;
+          padding: 8px 10px;
+          border-radius: 0 8px 8px 0;
+          border-left: 3px solid #5b8dd9;
+          border-top: none; border-right: none; border-bottom: none;
+          background: #f0f6fd;
+          gap: 8px;
+        }
+        .companion-icon {
+          width: 26px; height: 26px;
+          border-radius: 6px; font-size: 11px;
+        }
+        .companion-label { font-size: 10px; margin-bottom: 2px; }
+        .companion-link { font-size: 12px; }
+
+        /* ④ 本文フォントサイズを縮小 */
+        .article-body { padding: 14px 12px; }
+        .article-body :global(h2) { font-size: 14px; padding: 7px 10px; margin: 18px 0 7px; }
+        .article-body :global(h3) { font-size: 14px; }
+        .article-body :global(p) { font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
+        .article-body :global(li) { font-size: 13px; }
+
         .related-grid { grid-template-columns: 1fr; }
       }
     </style>
@@ -594,8 +622,8 @@ const glossaryPosts = allPosts
       <a href="/blog">記事一覧</a>
       <span>›</span>
       <a href={`/blog/category/${category ?? 'nikkei'}`}>{categoryLabel}</a>
-      <span>›</span>
-      <span>{title}</span>
+      <span class="breadcrumb-sep-title">›</span>
+      <span class="breadcrumb-title">{title}</span>
     </div>
 
     <div class="layout">
