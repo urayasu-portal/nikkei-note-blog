@@ -570,42 +570,55 @@ const glossaryPosts = allPosts
 
       /* レスポンシブ */
       @media (max-width: 860px) {
-        .layout { grid-template-columns: 1fr; }
+        .layout {
+          grid-template-columns: 1fr;
+          padding: 0 12px;       /* 左右余白を統一 */
+          margin-top: 12px;
+        }
         aside { position: static; }
+
+        /* 横幅はみ出し防止 */
+        .article-wrap { overflow: hidden; width: 100%; }
+        .article-title {
+          font-size: 18px;
+          word-break: break-word;
+          overflow-wrap: break-word;
+        }
 
         /* ① descriptionをモバイルで非表示 */
         .article-description { display: none; }
 
         /* ヘッダーのパディングを縮小 */
-        .article-header { padding: 14px 12px 12px; }
+        .article-header { padding: 18px 16px 16px; }
 
         /* ② パンくずの記事タイトルを非表示（カテゴリーまでに短縮） */
         .breadcrumb-title { display: none; }
         .breadcrumb-sep-title { display: none; }
+        .breadcrumb { padding: 10px 12px 0; }
 
         /* ③ コンパニオンボックスをスリム化 */
         .companion-box {
-          margin: 8px 12px 0;
-          padding: 8px 10px;
+          margin: 10px 16px 0;
+          padding: 9px 12px;
           border-radius: 0 8px 8px 0;
           border-left: 3px solid #5b8dd9;
           border-top: none; border-right: none; border-bottom: none;
           background: #f0f6fd;
-          gap: 8px;
+          gap: 10px;
         }
         .companion-icon {
-          width: 26px; height: 26px;
-          border-radius: 6px; font-size: 11px;
+          width: 28px; height: 28px;
+          border-radius: 7px; font-size: 12px;
         }
-        .companion-label { font-size: 10px; margin-bottom: 2px; }
-        .companion-link { font-size: 12px; }
+        .companion-label { font-size: 11px; margin-bottom: 2px; }
+        .companion-link { font-size: 13px; }
 
-        /* ④ 本文フォントサイズを縮小 */
-        .article-body { padding: 14px 12px; }
-        .article-body :global(h2) { font-size: 14px; padding: 7px 10px; margin: 18px 0 7px; }
-        .article-body :global(h3) { font-size: 14px; }
-        .article-body :global(p) { font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
-        .article-body :global(li) { font-size: 13px; }
+        /* ④ 本文フォントサイズ（読みやすいサイズに） */
+        .article-body { padding: 18px 16px; }
+        .article-body :global(h2) { font-size: 17px; padding: 10px 13px; margin: 22px 0 10px; }
+        .article-body :global(h3) { font-size: 15px; }
+        .article-body :global(p) { font-size: 15px; line-height: 1.85; margin-bottom: 14px; }
+        .article-body :global(li) { font-size: 15px; }
 
         .related-grid { grid-template-columns: 1fr; }
       }
