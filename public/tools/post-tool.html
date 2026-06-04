@@ -138,13 +138,14 @@
     </div>
     <textarea id="content" rows="20"
       placeholder="---
-title: &quot;2026年6月3日の日経225動向&quot;
-date: 2026-06-03T07:00:00+09:00
-slug: &quot;20260603-nikkei&quot;
-description: &quot;本日の日経平均の動きと注目銘柄&quot;
-draft: false
+title: '【2026年6月3日】今日の日本株ノート｜〇〇'
+description: '本日の相場概要（100〜140文字）'
+pubDate: '2026-06-03'
+category: 'nikkei'
+nikkei: '66934.33'
+nikkeiDate: '2026-06-03'
 ---
-本文..."></textarea>
+&lt;h2&gt;本文...&lt;/h2&gt;"></textarea>
     <p class="hint">
       記事カテゴリ別ファイル名：日経ノート → YYYYMMDD-nikkei.md／深掘り → YYYYMMDD-deep.md／投資メモ → YYYYMMDD-memo.md／週次振り返り → YYYYMMDD-weekly.md
     </p>
@@ -198,14 +199,120 @@ draft: false
 
   /* ── フロントマターパース ── */
   function parseFrontmatter(text) {
+    // pubDate（Astro形式）と date（旧Hugo形式）の両対応
+    const pubMatch   = text.match(/^pubDate:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
     const dateMatch  = text.match(/^date:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
+    const dm = pubMatch || dateMatch;
+    const catMatch   = text.match(/^category:\s*["']?([a-z]+)["']?/m);
     const slugMatch  = text.match(/^slug:\s*["']?([a-z0-9][a-z0-9-]*)["']?/m);
-    const titleMatch = text.match(/^title:\s*["'](.+?)["']\s*$/m);
+    const titleMatch = text.match(/^#{0,6}\s*title:\s*["'‘“](.+?)["'’”]\s*$/m);
+    // slug: category があれば pubDate+category から、なければ slug フィールドから
+    let slug = slugMatch ? slugMatch[1] : (catMatch ? catMatch[1] : null);
     return {
-      date:  dateMatch  ? `${dateMatch[1]}${dateMatch[2]}${dateMatch[3]}` : null,
-      slug:  slugMatch  ? slugMatch[1] : null,
+      date:  dm ? `${dm[1]}${dm[2]}${dm[3]}` : null,
+      slug:  slug,
       title: titleMatch ? titleMatch[1] : null,
     };
+  }
+
+  /* ── フロントマター自動補正 ──
+     貼り付け内容のフロントマターを正規化し、既知の崩れを修正する。
+     ・区切り線 -----(4本以上) → ---
+     ・カーリークォート(' ' " ") → ストレートクォート(' ")
+     ・行頭の見出し記号 (## title:) を除去
+     ・weeklyThemes / checkPoints を値だけ抽出して正しい形式で再構築
+     ・素の数値 (nikkei: 68402.13) を自動クォート
+  */
+  function normalizeArticle(raw) {
+    const fixes = [];
+    let text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/^\n+/, '');
+
+    const open = text.match(/^(-{3,})[ \t]*\n/);
+    if (!open) return { content: text, fixes, error: 'フロントマター（---）が見つかりません' };
+
+    // 開始デリミタ以降を行に分割し、本文の開始位置を探す
+    const after = text.slice(open[0].length).split('\n');
+    const fmRaw = [];
+    let bodyStart = -1;
+    for (let i = 0; i < after.length; i++) {
+      const t = after[i].trim();
+      if (/^-{3,}$/.test(t)) { bodyStart = i + 1; break; }      // 閉じデリミタ
+      if (/^<[a-zA-Z!\/]/.test(t)) { bodyStart = i; break; }    // 本文HTMLが閉じ無しで開始
+      fmRaw.push(after[i]);
+    }
+    if (bodyStart === -1) bodyStart = after.length;
+    const body = after.slice(bodyStart).join('\n').replace(/^\n+/, '');
+
+    let fm = fmRaw.join('\n');
+    if (open[1] !== '---') fixes.push('区切り線「' + open[1] + '」→「---」');
+    if (/[‘’“”]/.test(fm)) {
+      fm = fm.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+      fixes.push('カーリークォート → ストレートクォート');
+    }
+    if (/^#{1,6}\s+[A-Za-z]+:/m.test(fm)) {
+      fm = fm.replace(/^#{1,6}\s+([A-Za-z]+:)/gm, '$1');
+      fixes.push('行頭の見出し記号（##）を除去');
+    }
+
+    // 行ごとに走査：weeklyThemes / checkPoints は値だけ抽出して再構築
+    const scalars = [];
+    const themes = [];
+    const checks = [];
+    let mode = null, cur = null;
+    const hadProperIndent = /\n {2}- /.test(fm);
+
+    for (const rawLine of fm.split('\n')) {
+      const t = rawLine.trim();
+      if (t === '') continue;
+
+      if (/^weeklyThemes:\s*$/.test(t)) { mode = 'weekly'; continue; }
+      if (/^checkPoints:\s*$/.test(t)) { if (cur) { checks.push(cur); cur = null; } mode = 'checks'; continue; }
+
+      if (mode === 'weekly') {
+        const m = t.match(/^-\s*['"]?(.+?)['"]?$/);
+        if (m) { themes.push(m[1]); continue; }
+        mode = null;
+      }
+      if (mode === 'checks') {
+        const tm = t.match(/^-?\s*title:\s*['"]?(.+?)['"]?$/);
+        const xm = t.match(/^-?\s*text:\s*['"]?(.+?)['"]?$/);
+        if (tm) { if (cur) checks.push(cur); cur = { title: tm[1], text: '' }; continue; }
+        if (xm && cur) { cur.text = xm[1]; continue; }
+        if (cur) { checks.push(cur); cur = null; }
+        mode = null;
+      }
+
+      // スカラー行：素の数値はクォートで囲む
+      let line = t;
+      const sm = t.match(/^([A-Za-z][A-Za-z0-9]*):\s*(.+)$/);
+      if (sm) {
+        const k = sm[1], v = sm[2].trim();
+        if (!/^['"].*['"]$/.test(v) && /^[\d][\d.,]*$/.test(v)) {
+          line = k + ": '" + v + "'";
+          fixes.push(k + ' の数値をクォート');
+        }
+      }
+      scalars.push(line);
+    }
+    if (cur) checks.push(cur);
+
+    let rebuilt = scalars.join('\n');
+    if (themes.length) rebuilt += '\nweeklyThemes:\n' + themes.map(s => "  - '" + s + "'").join('\n');
+    if (checks.length) rebuilt += '\ncheckPoints:\n' + checks.map(c => "  - title: '" + c.title + "'\n    text: '" + c.text + "'").join('\n');
+    if ((themes.length || checks.length) && !hadProperIndent) {
+      fixes.push('weeklyThemes・checkPoints のインデントを補正');
+    }
+
+    const content = '---\n' + rebuilt + '\n---\n\n' + body + '\n';
+
+    // 検証
+    const warnings = [];
+    if (/[‘’“”]/.test(rebuilt)) warnings.push('カーリークォートが残っています');
+    if (!/^#{0,6}\s*title:\s*['"]/m.test(rebuilt)) warnings.push('title が見つかりません');
+    if (!/^pubDate:\s*['"]?\d{4}-\d{2}-\d{2}/m.test(rebuilt)) warnings.push('pubDate（YYYY-MM-DD）が見つかりません');
+    if (!/^category:\s*['"]/m.test(rebuilt)) warnings.push('category が見つかりません');
+
+    return { content, fixes: [...new Set(fixes)], warnings };
   }
 
   function updateParsedInfo() {
@@ -251,7 +358,7 @@ draft: false
   /* ── 記事（.md）投稿 ── */
   async function submitArticle() {
     const pat      = localStorage.getItem('nikkei_gh_pat');
-    const content  = document.getElementById('content').value;
+    const rawInput = document.getElementById('content').value;
     const filename = document.getElementById('filename').value.trim();
     const btn      = document.getElementById('submitBtn');
 
@@ -268,13 +375,35 @@ draft: false
       showStatus('error', '⚠️ ファイル名は YYYYMMDD- で始まる必要があります');
       return;
     }
-    if (!content.trim() || !content.includes('---')) {
+    if (!rawInput.trim() || !rawInput.includes('---')) {
       showStatus('error', '⚠️ .mdファイル内容を確認してください（フロントマターが必要）');
       return;
     }
 
+    // ── フロントマター自動補正 ──
+    const norm = normalizeArticle(rawInput);
+    if (norm.error) {
+      showStatus('error', '❌ ' + norm.error);
+      return;
+    }
+    if (norm.warnings.length) {
+      showStatus('error',
+        '❌ フロントマターに問題があるため投稿を中止しました：\n・' +
+        norm.warnings.join('\n・') +
+        '\n\n内容を修正してから再度お試しください。');
+      return;
+    }
+    const content = norm.content;
+    // 補正結果をテキストエリアに反映（ユーザーが確認できるように）
+    if (norm.fixes.length) {
+      document.getElementById('content').value = content;
+    }
+
     btn.disabled = true;
-    showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...');
+    const fixNote = norm.fixes.length
+      ? '（自動補正：' + norm.fixes.join('、') + '）'
+      : '';
+    showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...' + fixNote);
 
     try {
       const path   = `src/content/blog/${filename}`;
@@ -297,9 +426,13 @@ draft: false
         const slug    = filename.replace(/^\d{8}-/, '').replace('.md', '');
         const ghUrl   = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${path}`;
         const siteUrl = `https://nikkei-note.com/blog/${slug}/`;
+        const fixLine = norm.fixes.length
+          ? `🛠 自動補正：${norm.fixes.join('、')}\n`
+          : '';
         showStatus('success',
           `✅ ${action}しました！\n` +
           `📄 <strong>${filename}</strong>\n` +
+          fixLine +
           `🔗 <a href="${ghUrl}" target="_blank" rel="noopener">GitHubで確認する</a>\n` +
           `🌐 ビルド完了後（約1〜2分）：<a href="${siteUrl}" target="_blank" rel="noopener">記事ページを開く</a>`
         );
