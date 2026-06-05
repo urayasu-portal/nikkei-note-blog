@@ -199,18 +199,17 @@ nikkeiDate: '2026-06-03'
 
   /* ── フロントマターパース ── */
   function parseFrontmatter(text) {
-    // pubDate（Astro形式）と date（旧Hugo形式）の両対応
-    const pubMatch   = text.match(/^pubDate:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
-    const dateMatch  = text.match(/^date:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
+    // pubDate（Astro形式）と date（Hugo形式）の両対応
+    const pubMatch   = text.match(/^pubDate:\s*[“’]?(\d{4})-(\d{2})-(\d{2})/m);
+    const dateMatch  = text.match(/^date:\s*[“’]?(\d{4})-(\d{2})-(\d{2})/m);
     const dm = pubMatch || dateMatch;
-    const catMatch   = text.match(/^category:\s*["']?([a-z]+)["']?/m);
-    const slugMatch  = text.match(/^slug:\s*["']?([a-z0-9][a-z0-9-]*)["']?/m);
-    const titleMatch = text.match(/^#{0,6}\s*title:\s*["'‘“](.+?)["'’”]\s*$/m);
-    // slug: category があれば pubDate+category から、なければ slug フィールドから
-    let slug = slugMatch ? slugMatch[1] : (catMatch ? catMatch[1] : null);
+    // category（Astro形式）と slug（Hugo形式）の両対応。category を優先
+    const catMatch  = text.match(/^category:\s*[“’]?([a-z]+)[“’]?/m);
+    const slugMatch = text.match(/^slug:\s*[“’]?([a-z0-9][a-z0-9-]*)[“’]?/m);
+    const titleMatch = text.match(/^title:\s*[‘”](.+?)[‘”]\s*$/m);
     return {
-      date:  dm ? `${dm[1]}${dm[2]}${dm[3]}` : null,
-      slug:  slug,
+      date:  dm         ? `${dm[1]}${dm[2]}${dm[3]}` : null,
+      slug:  catMatch   ? catMatch[1] : (slugMatch ? slugMatch[1] : null),
       title: titleMatch ? titleMatch[1] : null,
     };
   }
