@@ -152,9 +152,9 @@ YYYYMMDD-glossary-[用語のローマ字またはキーワード].md
 ■ 使用するHTMLタグ・クラス
 
 見出し：
-<h1> 記事タイトル（本文先頭に1つ）
-<h2> 各ブロックの見出し
-<h3> ブロック内の小見出し（必要な場合のみ）
+・<h1> は本文内に含めない（レイアウトがタイトルを自動表示するため不要）
+・<h2> 各ブロックの見出し
+・<h3> ブロック内の小見出し（必要な場合のみ）
 
 定義ボックス（ブロック2）：
 <div class="definition-box">
@@ -164,21 +164,22 @@ YYYYMMDD-glossary-[用語のローマ字またはキーワード].md
 
 注意・誤解ボックス（ブロック6）：
 <div class="caution-box">
-  <p class="caution-label">よくある誤解</p>
-  （内容）
+  <p class="caution-label">⚠ よくある誤解</p>
+  <p>（内容）</p>
 </div>
 
 関連用語リスト（ブロック7）：
+※ <h2> や <ul><li> は使わないこと。以下の形式を厳守する。
 <div class="related-links">
-  <h2>あわせて読みたい</h2>
-  <ul>
-    <li><a href="（URL）">（用語名）とは →</a></li>
-  </ul>
+  <p class="rl-header">あわせて読みたい</p>
+  <a class="rl-item" href="/blog/（slug）/">（用語名）とは</a>
+  <a class="rl-item" href="/blog/category/glossary/">（用語名）とは</a>
 </div>
 
 まとめ（ブロック8）：
+※ <h2> は使わないこと。以下の形式を厳守する。
 <div class="summary-box">
-  <h2>まとめ</h2>
+  <p class="summary-title">まとめ</p>
   <ul>
     <li>（まとめ1）</li>
     <li>（まとめ2）</li>
@@ -187,7 +188,12 @@ YYYYMMDD-glossary-[用語のローマ字またはキーワード].md
 </div>
 
 内部リンク（相場ノートへの誘導）：
-<a href="https://nikkei-note.com/blog/（slug）/">（リンクテキスト）</a>
+※ドメインは含めず、必ず相対パスで記述する。
+<a href="/blog/（slug）/">（リンクテキスト）</a>
+
+既存の用語解説記事へのリンク：
+・記事が存在する場合 → /blog/YYYYMMDD-glossary-（keyword）/
+・記事が存在しない場合 → /blog/category/glossary/
 
 ━━━━━━━━━━━━━━━━━━━━
 【タイトルの付け方】
@@ -251,10 +257,13 @@ https://nikkei-note.com/blog/YYYYMMDD-deep/
 □ フロントマターの引用符がすべて半角ストレートクォート（'）になっている
 □ category が 'glossary' になっている
 □ ファイル名が YYYYMMDD-glossary-[keyword].md の形式になっている
+□ 本文先頭に <h1> が含まれていない
 □ 8ブロックがすべて順番通りに存在している
 □ ブロック2に definition-box クラスの div が存在している
-□ ブロック5に相場ノートへの内部リンク（aタグ）が存在している
-□ ブロック7に関連用語リンクが3〜5個存在している
-□ ブロック8のまとめが箇条書き3点になっている
+□ ブロック5に相場ノートへの内部リンク（aタグ・相対パス）が存在している
+□ ブロック6の caution-label に ⚠ が含まれている
+□ ブロック7が <p class="rl-header"> + <a class="rl-item"> の形式になっている（h2・ul・li は不可）
+□ ブロック8が <p class="summary-title"> + <ul><li> の形式になっている（h2 は不可）
+□ すべての内部リンクが相対パス（/blog/...）になっている（https://nikkei-note.com は不可）
 □ 本文文字数が1,500〜2,500字の範囲内である
 □ 断定的な投資推奨表現が含まれていない
