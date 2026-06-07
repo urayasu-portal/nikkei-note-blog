@@ -33,6 +33,10 @@ const blog = defineCollection({
 			title: z.string(),
 			text:  z.string(),
 		})).optional(),
+		// 用語解説専用フィールド
+		tags:            z.array(z.string()).optional(),
+		relatedDeep:     z.string().optional(),
+		relatedGlossary: z.array(z.string()).optional(),
 	}),
 });
 

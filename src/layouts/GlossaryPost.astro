@@ -1,0 +1,285 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import '../styles/glossary.css';
+
+type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
+
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  tags,
+  relatedDeep,
+  relatedGlossary,
+  readTimeMin,
+} = Astro.props;
+
+const formattedDate = pubDate
+  ? `${pubDate.getFullYear()}年${pubDate.getMonth() + 1}月${pubDate.getDate()}日`
+  : '';
+
+const currentPath = Astro.url.pathname;
+const currentSlug = currentPath.replace(/^\/blog\//, '').replace(/\/$/, '');
+const ogpImage = currentSlug ? `/og/${currentSlug}.png` : '/blog-placeholder-1.jpg';
+
+const allPosts = await getCollection('blog');
+
+// 関連深掘りノート
+let relatedDeepPost: CollectionEntry<'blog'> | undefined;
+if (relatedDeep) {
+  relatedDeepPost = allPosts.find((p) => p.id === relatedDeep);
+}
+
+// 関連用語 → タイトルで検索
+const relatedGlossaryPosts = (relatedGlossary ?? []).map((termName) => {
+  const post = allPosts.find(
+    (p) => p.data.category === 'glossary' && p.data.title.includes(termName)
+  );
+  return { name: termName, post };
+});
+
+const hasRelated = relatedDeepPost || relatedGlossaryPosts.length > 0;
+---
+
+<html lang="ja">
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      image={ogpImage}
+      type="article"
+      pubDate={pubDate}
+      updatedDate={updatedDate}
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;800&display=swap" rel="stylesheet">
+
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": title,
+      "description": description,
+      "image": `https://nikkei-note.com${ogpImage}`,
+      "url": Astro.url.href,
+      "datePublished": pubDate?.toISOString(),
+      "dateModified": (updatedDate ?? pubDate)?.toISOString(),
+      "author": { "@type": "Person", "name": "MK" },
+      "publisher": { "@type": "Organization", "name": "今日の日本株ノート", "url": "https://nikkei-note.com" },
+      "mainEntityOfPage": { "@type": "WebPage", "@id": Astro.url.href }
+    })} />
+
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "ホーム",    "item": "https://nikkei-note.com/" },
+        { "@type": "ListItem", "position": 2, "name": "記事一覧", "item": "https://nikkei-note.com/blog/" },
+        { "@type": "ListItem", "position": 3, "name": "用語解説", "item": "https://nikkei-note.com/blog/category/glossary/" },
+        { "@type": "ListItem", "position": 4, "name": title,      "item": Astro.url.href }
+      ]
+    })} />
+  </head>
+
+  <body class="glossary-page">
+    <SiteHeader currentCategory="glossary" />
+
+    <!-- パンくず -->
+    <div class="g-breadcrumb">
+      <a href="/">ホーム</a>
+      <span>›</span>
+      <a href="/blog/">記事一覧</a>
+      <span>›</span>
+      <a href="/blog/category/glossary/">用語解説</a>
+      <span class="g-breadcrumb-sep-title">›</span>
+      <span class="g-breadcrumb-title">{title}</span>
+    </div>
+
+    <div class="g-layout">
+
+      <!-- 記事本文 -->
+      <main>
+        <article class="g-article-wrap">
+
+          <!-- 記事ヘッダー -->
+          <div class="g-article-header">
+            <div class="g-article-meta-row">
+              <span class="g-badge">用語解説</span>
+              <span class="g-article-date">{formattedDate}</span>
+              {updatedDate && (
+                <span class="g-article-date">
+                  更新: {updatedDate.getFullYear()}年{updatedDate.getMonth() + 1}月{updatedDate.getDate()}日
+                </span>
+              )}
+              {readTimeMin && (
+                <span class="g-read-time">約{readTimeMin}分で読めます</span>
+              )}
+            </div>
+            <h1 class="g-article-title">{title}</h1>
+            {tags && tags.length > 0 && (
+              <div class="g-tags">
+                {tags.map((t) => <span class="g-tag">#{t}</span>)}
+              </div>
+            )}
+          </div>
+
+          <!-- 本文 -->
+          <div class="g-article-body">
+            <slot />
+          </div>
+
+        </article>
+      </main>
+
+      <!-- サイドバー -->
+      <aside class="g-sidebar">
+
+        <!-- 相場ウィジェット（静的） -->
+        <div class="g-side-card">
+          <h3>今日の相場</h3>
+          <div class="g-market-list">
+            <div class="g-market-row">
+              <span class="g-market-label">日経平均<small>前日終値</small></span>
+              <div class="g-market-value">
+                38,487<br>
+                <span class="g-plus">+213 (+0.56%)</span>
+              </div>
+            </div>
+            <div class="g-market-row">
+              <span class="g-market-label">TOPIX<small>前日終値</small></span>
+              <div class="g-market-value">
+                2,736<br>
+                <span class="g-plus">+11 (+0.41%)</span>
+              </div>
+            </div>
+            <div class="g-market-row">
+              <span class="g-market-label">ドル円<small>15時30分</small></span>
+              <div class="g-market-value">
+                146.82<br>
+                <span class="g-minus">-0.34 (-0.23%)</span>
+              </div>
+            </div>
+            <div class="g-market-row">
+              <span class="g-market-label">NYダウ<small>前日終値</small></span>
+              <div class="g-market-value">
+                43,128<br>
+                <span class="g-plus">+84 (+0.20%)</span>
+              </div>
+            </div>
+          </div>
+          <p class="g-market-note">※ 表示値は静的サンプルです。最新値は各証券会社サイトでご確認ください。</p>
+        </div>
+
+        <!-- 目次（JS生成） -->
+        <div class="g-side-card" id="toc-card">
+          <h3>目次</h3>
+          <ol id="toc-list" class="g-toc-list">
+            <li><span class="g-toc-empty">読み込み中…</span></li>
+          </ol>
+        </div>
+
+        <!-- 関連記事 -->
+        {hasRelated && (
+          <div class="g-side-card">
+            <h3>関連コンテンツ</h3>
+
+            {relatedDeepPost && (
+              <div style="margin-bottom: 14px;">
+                <div class="g-related-meta" style="margin-bottom:8px;">深掘りノート</div>
+                <a class="g-related-item" href={`/blog/${relatedDeepPost.id}/`}>
+                  <div class="g-related-meta">詳しく読む</div>
+                  <div class="g-related-title">{relatedDeepPost.data.title}</div>
+                </a>
+              </div>
+            )}
+
+            {relatedGlossaryPosts.length > 0 && (
+              <div>
+                <div class="g-related-meta" style="margin-bottom:8px;">関連用語</div>
+                <div class="g-related-pills">
+                  {relatedGlossaryPosts.map(({ name, post }) =>
+                    post
+                      ? <a class="g-related-pill" href={`/blog/${post.id}/`}>{name}</a>
+                      : <a class="g-related-pill" href={`/blog/category/glossary/`}>{name}</a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <!-- ナビゲーション -->
+        <div class="g-side-card">
+          <h3>ナビゲーション</h3>
+          <div class="g-related-list">
+            <a class="g-related-item" href="/blog/category/glossary/">
+              <div class="g-related-meta">用語解説</div>
+              <div class="g-related-title">用語解説一覧へ</div>
+            </a>
+            <a class="g-related-item" href="/blog/">
+              <div class="g-related-meta">記事一覧</div>
+              <div class="g-related-title">全記事を見る</div>
+            </a>
+            <a class="g-related-item" href="/">
+              <div class="g-related-meta">トップ</div>
+              <div class="g-related-title">今日の日本株ノートへ</div>
+            </a>
+          </div>
+        </div>
+
+        <!-- 免責 -->
+        <div class="g-side-card">
+          <p style="font-size:12px;color:var(--muted);line-height:1.7;">
+            当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。
+            投資判断はご自身の責任でお願いいたします。
+          </p>
+        </div>
+
+      </aside>
+    </div>
+
+    <footer class="g-footer">
+      <div class="g-footer-inner">
+        <div>© 今日の日本株ノート</div>
+        <div>
+          <a href="/about">このサイトについて</a>｜
+          <a href="/privacy">プライバシーポリシー</a>｜
+          <a href="/contact">お問い合わせ</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // 目次の自動生成
+      (function () {
+        const tocCard = document.getElementById('toc-card');
+        const tocList = document.getElementById('toc-list');
+        const articleBody = document.querySelector('.g-article-body');
+        if (!tocList || !articleBody) return;
+
+        const headings = Array.from(articleBody.querySelectorAll('h2'));
+        if (headings.length === 0) {
+          if (tocCard) tocCard.style.display = 'none';
+          return;
+        }
+
+        tocList.innerHTML = '';
+        headings.forEach((h2, i) => {
+          const id = `g-sec-${i}`;
+          h2.id = id;
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = `#${id}`;
+          a.textContent = h2.textContent ?? '';
+          li.appendChild(a);
+          tocList.appendChild(li);
+        });
+      })();
+    </script>
+
+  </body>
+</html>

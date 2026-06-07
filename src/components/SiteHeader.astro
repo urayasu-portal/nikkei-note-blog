@@ -16,6 +16,7 @@ const { currentCategory } = Astro.props;
       <a href="/blog/category/deep" class={currentCategory === 'deep' ? 'active' : ''}>深掘りノート</a>
       <a href="/blog/category/nikkei" class={currentCategory === 'nikkei' ? 'active' : ''}>日経ノート</a>
       <a href="/blog/category/memo" class={currentCategory === 'memo' ? 'active' : ''}>投資メモ</a>
+      <a href="/blog/category/glossary/" class={currentCategory === 'glossary' ? 'active' : ''}>用語解説</a>
       <a href="/about">このサイトについて</a>
     </nav>
     <button class="hamburger" aria-label="メニューを開く" aria-expanded="false">
@@ -29,6 +30,7 @@ const { currentCategory } = Astro.props;
     <a href="/blog/category/deep">深掘りノート</a>
     <a href="/blog/category/nikkei">日経ノート</a>
     <a href="/blog/category/memo">投資メモ</a>
+    <a href="/blog/category/glossary/">用語解説</a>
     <a href="/about">このサイトについて</a>
   </div>
 </header>

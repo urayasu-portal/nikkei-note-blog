@@ -6,7 +6,8 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
-  const categories = [...new Set(posts.map((p) => p.data.category).filter(Boolean))];
+  const categories = [...new Set(posts.map((p) => p.data.category).filter(Boolean))]
+    .filter((c) => c !== 'glossary');
   return categories.map((category) => ({ params: { category } }));
 }
 
