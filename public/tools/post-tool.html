@@ -288,9 +288,10 @@ nikkeiDate: '2026-06-03'
       const sm = t.match(/^([A-Za-z][A-Za-z0-9]*):\s*(.+)$/);
       if (sm) {
         const k = sm[1], v = sm[2].trim();
-        if (!/^['"].*['"]$/.test(v) && /^[\d][\d.,]*$/.test(v)) {
-          line = k + ": '" + v + "'";
-          fixes.push(k + ' の数値をクォート');
+        if (!/^['"].*['"]$/.test(v) && !/^\[/.test(v) && !/^\{/.test(v)) {
+          const escaped = v.replace(/'/g, "\\'");
+          line = k + ": '" + escaped + "'";
+          fixes.push(k + ' の値をクォート');
         }
       }
       scalars.push(line);
