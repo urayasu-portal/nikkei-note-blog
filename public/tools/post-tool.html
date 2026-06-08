@@ -65,8 +65,8 @@
       cursor: pointer; font-size: 0.88rem; font-weight: bold; color: #555;
       user-select: none; list-style: none;
     }
-    details summary::before { content: '▶ '; font-size: 0.7rem; }
-    details[open] summary::before { content: '▼ '; }
+    details summary::before { content: "\25B6  "; font-size: 0.7rem; }
+    details[open] summary::before { content: "\25BC  "; }
     .pat-body { margin-top: 14px; }
     .pat-ok { font-size: 0.8rem; color: #27ae60; margin-top: 6px; display: none; }
 
@@ -74,9 +74,9 @@
       margin-top: 18px; padding: 15px 18px; border-radius: 10px;
       font-size: 0.9rem; line-height: 1.7; display: none;
     }
-    #status.success { background: #d5f5e3; color: #186a3b; border: 1px solid #a9dfbf; display: block; }
-    #status.error   { background: #fadbd8; color: #922b21; border: 1px solid #f1948a; display: block; }
-    #status.loading { background: #d6eaf8; color: #1a5276; border: 1px solid #a9cce3; display: block; }
+    #status.st-success { background: #d5f5e3; color: #186a3b; border: 1px solid #a9dfbf; display: block; }
+    #status.st-error   { background: #fadbd8; color: #922b21; border: 1px solid #f1948a; display: block; }
+    #status.st-loading { background: #d6eaf8; color: #1a5276; border: 1px solid #a9cce3; display: block; }
     #status a { color: inherit; font-weight: bold; }
 
     .badge {
@@ -105,16 +105,14 @@
 <body>
 <div class="container">
 
-  <!-- Header -->
   <div class="app-header">
-    <h1>📈 今日の日本株ノート 記事投稿ツール</h1>
+    <h1>&#x1F4C8; 今日の日本株ノート 記事投稿ツール</h1>
     <p>AIが生成した .md ファイル内容を貼り付けて、GitHubに直接投稿します</p>
   </div>
 
-  <!-- PAT設定 -->
   <div class="card">
     <details id="patDetails">
-      <summary>⚙️ GitHub トークン設定</summary>
+      <summary>&#x2699;&#xFE0F; GitHub トークン設定</summary>
       <div class="pat-body">
         <label class="card-title" style="margin-bottom:8px;">Personal Access Token</label>
         <div class="row">
@@ -122,62 +120,57 @@
           <button class="btn btn-blue" onclick="savePat()">保存</button>
         </div>
         <p class="hint">
-          GitHub → Settings → Developer settings → Personal access tokens (Fine-grained) で発行。<br>
+          GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens (Fine-grained) で発行。<br>
           権限：<strong>Contents: Read and write</strong> のみ必要。設定はこのブラウザにのみ保存されます。
         </p>
-        <div class="pat-ok" id="patOk">✅ トークンが保存されています</div>
+        <div class="pat-ok" id="patOk">&#x2705; トークンが保存されています</div>
       </div>
     </details>
   </div>
 
-  <!-- .md内容 -->
   <div class="card">
     <div class="card-title">
-      📋 .md ファイル内容
+      &#x1F4CB; .md ファイル内容
       <span class="badge">フロントマター＋本文をそのまま貼り付け</span>
     </div>
     <textarea id="content" rows="20"
       placeholder="---
-title: '【2026年6月3日】今日の日本株ノート｜〇〇'
-description: '本日の相場概要（100〜140文字）'
-pubDate: '2026-06-03'
+title: '【2026年6月5日】今日の日本株ノート'
+description: '本日の相場概要'
+pubDate: '2026-06-05'
 category: 'nikkei'
-nikkei: '66934.33'
-nikkeiDate: '2026-06-03'
 ---
 &lt;h2&gt;本文...&lt;/h2&gt;"></textarea>
     <p class="hint">
-      記事カテゴリ別ファイル名：日経ノート → YYYYMMDD-nikkei.md／深掘り → YYYYMMDD-deep.md／投資メモ → YYYYMMDD-memo.md／週次振り返り → YYYYMMDD-weekly.md
+      カテゴリ別：日経ノート &rarr; YYYYMMDD-nikkei.md ／ 深掘り &rarr; YYYYMMDD-deep.md ／ 投資メモ &rarr; YYYYMMDD-memo.md ／ 週次振り返り &rarr; YYYYMMDD-weekly.md
     </p>
     <div id="parsedInfo"></div>
   </div>
 
-  <!-- ファイル名 -->
   <div class="card">
-    <div class="card-title">📄 ファイル名</div>
+    <div class="card-title">&#x1F4C4; ファイル名</div>
     <div class="row">
-      <input type="text" id="filename" placeholder="20260603-nikkei.md">
-      <button class="btn btn-ghost" onclick="autoFillFilename()">🔄 自動入力</button>
+      <input type="text" id="filename" placeholder="20260605-nikkei.md">
+      <button class="btn btn-ghost" onclick="autoFillFilename()">&#x1F504; 自動入力</button>
     </div>
-    <p class="hint">形式：YYYYMMDD-[nikkei|deep|memo|weekly].md　上の内容を貼り付けてから「自動入力」を押すと date と slug から自動生成されます。</p>
+    <p class="hint">形式：YYYYMMDD-[nikkei|deep|memo|weekly].md　内容を貼り付けてから「自動入力」を押すと pubDate と category から自動生成されます。</p>
   </div>
 
-  <!-- 投稿ボタン -->
   <button class="btn-submit" id="submitBtn" onclick="submitArticle()">
-    🚀 GitHub に投稿する
+    &#x1F680; GitHub に投稿する
   </button>
 
   <div id="status"></div>
 
 </div>
 <script>
-  const OWNER  = 'urayasu-portal';
-  const REPO   = 'nikkei-note-blog';
-  const BRANCH = 'main';
+  var OWNER   = 'urayasu-portal';
+  var REPO    = 'nikkei-note-blog';
+  var BRANCH  = 'main';
+  var PAT_KEY = 'nikkei_gh_pat';
 
-  /* ── 初期化 ── */
-  window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('nikkei_gh_pat');
+  window.addEventListener('DOMContentLoaded', function() {
+    var saved = localStorage.getItem(PAT_KEY);
     if (saved) {
       document.getElementById('patInput').value = saved;
       document.getElementById('patOk').style.display = 'block';
@@ -187,287 +180,172 @@ nikkeiDate: '2026-06-03'
     document.getElementById('content').addEventListener('input', updateParsedInfo);
   });
 
-  /* ── PAT ── */
   function savePat() {
-    const pat = document.getElementById('patInput').value.trim();
+    var pat = document.getElementById('patInput').value.trim();
     if (!pat) { showStatus('error', '⚠️ トークンを入力してください'); return; }
-    localStorage.setItem('nikkei_gh_pat', pat);
+    localStorage.setItem(PAT_KEY, pat);
     document.getElementById('patOk').style.display = 'block';
     document.getElementById('patDetails').open = false;
     showStatus('success', '✅ トークンを保存しました');
   }
 
-  /* ── フロントマターパース ── */
-  function parseFrontmatter(text) {
-    // カーリークォート（’ ‘ “ “）をストレートクォートに正規化してからパース
-    text = text.replace(/[‘’]/g, “’”).replace(/[“”]/g, ‘”’);
-    // pubDate（Astro形式）と date（Hugo形式）の両対応
-    const pubMatch   = text.match(/^pubDate:\s*[“’]?(\d{4})-(\d{2})-(\d{2})/m);
-    const dateMatch  = text.match(/^date:\s*[“’]?(\d{4})-(\d{2})-(\d{2})/m);
-    const dm = pubMatch || dateMatch;
-    // category（Astro形式）と slug（Hugo形式）の両対応。category を優先
-    const catMatch  = text.match(/^category:\s*[“’]?([a-z]+)[“’]?/m);
-    const slugMatch = text.match(/^slug:\s*[“’]?([a-z0-9][a-z0-9-]*)[“’]?/m);
-    const titleMatch = text.match(/^title:\s*[‘”](.+?)[‘”]\s*$/m);
+  /*
+   * parseFrontmatter
+   * pubDate / date  両対応（pubDate 優先）
+   * category / slug 両対応（category 優先）
+   * カーリークォートを \u エスケープで除去してからパース
+   */
+  function parseFrontmatter(raw) {
+    var text = raw
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"');
+
+    var pubM  = text.match(/^pubDate:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
+    var dateM = text.match(/^date:\s*["']?(\d{4})-(\d{2})-(\d{2})/m);
+    var dm    = pubM || dateM;
+
+    var catM  = text.match(/^category:\s*["']?([a-z]+)["']?/m);
+    var slugM = text.match(/^slug:\s*["']?([a-z0-9][a-z0-9-]*)["']?/m);
+
+    var titleM = text.match(/^title:\s*['"](.+?)['"]\s*$/m);
+
     return {
-      date:  dm         ? `${dm[1]}${dm[2]}${dm[3]}` : null,
-      slug:  catMatch   ? catMatch[1] : (slugMatch ? slugMatch[1] : null),
-      title: titleMatch ? titleMatch[1] : null,
+      date:  dm     ? (dm[1] + dm[2] + dm[3])                  : null,
+      slug:  catM   ? catM[1] : (slugM ? slugM[1] : null),
+      title: titleM ? titleM[1]                                 : null
     };
-  }
-
-  /* ── フロントマター自動補正 ──
-     貼り付け内容のフロントマターを正規化し、既知の崩れを修正する。
-     ・区切り線 -----(4本以上) → ---
-     ・カーリークォート(' ' " ") → ストレートクォート(' ")
-     ・行頭の見出し記号 (## title:) を除去
-     ・weeklyThemes / checkPoints を値だけ抽出して正しい形式で再構築
-     ・素の数値 (nikkei: 68402.13) を自動クォート
-  */
-  function normalizeArticle(raw) {
-    const fixes = [];
-    let text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/^\n+/, '');
-
-    const open = text.match(/^(-{3,})[ \t]*\n/);
-    if (!open) return { content: text, fixes, error: 'フロントマター（---）が見つかりません' };
-
-    // 開始デリミタ以降を行に分割し、本文の開始位置を探す
-    const after = text.slice(open[0].length).split('\n');
-    const fmRaw = [];
-    let bodyStart = -1;
-    for (let i = 0; i < after.length; i++) {
-      const t = after[i].trim();
-      if (/^-{3,}$/.test(t)) { bodyStart = i + 1; break; }      // 閉じデリミタ
-      if (/^<[a-zA-Z!\/]/.test(t)) { bodyStart = i; break; }    // 本文HTMLが閉じ無しで開始
-      fmRaw.push(after[i]);
-    }
-    if (bodyStart === -1) bodyStart = after.length;
-    const body = after.slice(bodyStart).join('\n').replace(/^\n+/, '');
-
-    let fm = fmRaw.join('\n');
-    if (open[1] !== '---') fixes.push('区切り線「' + open[1] + '」→「---」');
-    if (/[‘’“”]/.test(fm)) {
-      fm = fm.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
-      fixes.push('カーリークォート → ストレートクォート');
-    }
-    if (/^#{1,6}\s+[A-Za-z]+:/m.test(fm)) {
-      fm = fm.replace(/^#{1,6}\s+([A-Za-z]+:)/gm, '$1');
-      fixes.push('行頭の見出し記号（##）を除去');
-    }
-
-    // 行ごとに走査：weeklyThemes / checkPoints は値だけ抽出して再構築
-    const scalars = [];
-    const themes = [];
-    const checks = [];
-    let mode = null, cur = null;
-    const hadProperIndent = /\n {2}- /.test(fm);
-
-    for (const rawLine of fm.split('\n')) {
-      const t = rawLine.trim();
-      if (t === '') continue;
-
-      if (/^weeklyThemes:\s*$/.test(t)) { mode = 'weekly'; continue; }
-      if (/^checkPoints:\s*$/.test(t)) { if (cur) { checks.push(cur); cur = null; } mode = 'checks'; continue; }
-
-      if (mode === 'weekly') {
-        const m = t.match(/^-\s*['"]?(.+?)['"]?$/);
-        if (m) { themes.push(m[1]); continue; }
-        mode = null;
-      }
-      if (mode === 'checks') {
-        const tm = t.match(/^-?\s*title:\s*['"]?(.+?)['"]?$/);
-        const xm = t.match(/^-?\s*text:\s*['"]?(.+?)['"]?$/);
-        if (tm) { if (cur) checks.push(cur); cur = { title: tm[1], text: '' }; continue; }
-        if (xm && cur) { cur.text = xm[1]; continue; }
-        if (cur) { checks.push(cur); cur = null; }
-        mode = null;
-      }
-
-      // スカラー行：素の数値はクォートで囲む
-      let line = t;
-      const sm = t.match(/^([A-Za-z][A-Za-z0-9]*):\s*(.+)$/);
-      if (sm) {
-        const k = sm[1], v = sm[2].trim();
-        if (!/^['"].*['"]$/.test(v) && !/^\[/.test(v) && !/^\{/.test(v)) {
-          const escaped = v.replace(/'/g, "\\'");
-          line = k + ": '" + escaped + "'";
-          fixes.push(k + ' の値をクォート');
-        }
-      }
-      scalars.push(line);
-    }
-    if (cur) checks.push(cur);
-
-    let rebuilt = scalars.join('\n');
-    if (themes.length) rebuilt += '\nweeklyThemes:\n' + themes.map(s => "  - '" + s + "'").join('\n');
-    if (checks.length) rebuilt += '\ncheckPoints:\n' + checks.map(c => "  - title: '" + c.title + "'\n    text: '" + c.text + "'").join('\n');
-    if ((themes.length || checks.length) && !hadProperIndent) {
-      fixes.push('weeklyThemes・checkPoints のインデントを補正');
-    }
-
-    const content = '---\n' + rebuilt + '\n---\n\n' + body + '\n';
-
-    // 検証
-    const warnings = [];
-    if (/[‘’“”]/.test(rebuilt)) warnings.push('カーリークォートが残っています');
-    if (!/^#{0,6}\s*title:\s*['"]/m.test(rebuilt)) warnings.push('title が見つかりません');
-    if (!/^pubDate:\s*['"]?\d{4}-\d{2}-\d{2}/m.test(rebuilt)) warnings.push('pubDate（YYYY-MM-DD）が見つかりません');
-    if (!/^category:\s*['"]/m.test(rebuilt)) warnings.push('category が見つかりません');
-
-    return { content, fixes: [...new Set(fixes)], warnings };
   }
 
   function updateParsedInfo() {
-    const content = document.getElementById('content').value;
-    const info = document.getElementById('parsedInfo');
-    if (!content.includes('---')) { info.style.display = 'none'; return; }
-    const { date, slug, title } = parseFrontmatter(content);
-    if (!date && !slug && !title) { info.style.display = 'none'; return; }
-    const parts = [];
-    if (title) parts.push(`<strong>タイトル：</strong>${escHtml(title)}`);
-    if (date)  parts.push(`<strong>日付：</strong>${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`);
-    if (slug)  parts.push(`<strong>スラッグ：</strong>${escHtml(slug)}`);
-    if (date && slug) parts.push(`<strong>推奨ファイル名：</strong>${date}-${slug}.md`);
-    info.innerHTML = parts.join('　　');
+    var content = document.getElementById('content').value;
+    var info    = document.getElementById('parsedInfo');
+    if (content.indexOf('---') === -1) { info.style.display = 'none'; return; }
+    var p = parseFrontmatter(content);
+    if (!p.date && !p.slug && !p.title) { info.style.display = 'none'; return; }
+    var parts = [];
+    if (p.title) parts.push('<strong>タイトル：</strong>' + escHtml(p.title));
+    if (p.date)  parts.push('<strong>日付：</strong>' + p.date.slice(0,4) + '-' + p.date.slice(4,6) + '-' + p.date.slice(6,8));
+    if (p.slug)  parts.push('<strong>カテゴリ：</strong>' + escHtml(p.slug));
+    if (p.date && p.slug) parts.push('<strong>推奨ファイル名：</strong>' + p.date + '-' + p.slug + '.md');
+    info.innerHTML = parts.join('&emsp;');
     info.style.display = 'block';
   }
 
-  /* ── ファイル名自動入力 ── */
   function autoFillFilename() {
-    const content = document.getElementById('content').value.trim();
+    var content = document.getElementById('content').value.trim();
     if (!content) { showStatus('error', '⚠️ 先に .md ファイル内容を貼り付けてください'); return; }
-    const { date, slug } = parseFrontmatter(content);
-    if (date && slug) {
-      document.getElementById('filename').value = `${date}-${slug}.md`;
-    } else if (slug) {
-      document.getElementById('filename').value = `${slug}.md`;
-      showStatus('error', '⚠️ date が見つからなかったため slug のみでファイル名を設定しました');
+    var p = parseFrontmatter(content);
+    if (p.date && p.slug) {
+      document.getElementById('filename').value = p.date + '-' + p.slug + '.md';
+      showStatus('success', '✅ ファイル名を自動入力しました：' + p.date + '-' + p.slug + '.md');
+    } else if (p.slug && !p.date) {
+      showStatus('error', '⚠️ pubDate が見つかりません。フロントマターを確認してください');
+    } else if (p.date && !p.slug) {
+      showStatus('error', '⚠️ category が見つかりません。フロントマターを確認してください');
     } else {
-      showStatus('error', '⚠️ slug / date が見つかりませんでした');
+      showStatus('error', '⚠️ pubDate と category が見つかりません。フロントマターを確認してください');
     }
   }
 
-  /* ── GitHub API ヘッダー ── */
   function makeHeaders(pat) {
     return {
-      'Authorization': `Bearer ${pat}`,
+      'Authorization': 'Bearer ' + pat,
       'Accept': 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     };
   }
 
-  /* ── 記事（.md）投稿 ── */
   async function submitArticle() {
-    const pat      = localStorage.getItem('nikkei_gh_pat');
-    const rawInput = document.getElementById('content').value;
-    const filename = document.getElementById('filename').value.trim();
-    const btn      = document.getElementById('submitBtn');
+    var pat      = localStorage.getItem(PAT_KEY);
+    var content  = document.getElementById('content').value;
+    var filename = document.getElementById('filename').value.trim();
+    var btn      = document.getElementById('submitBtn');
 
     if (!pat) {
-      showStatus('error', '⚠️ GitHubトークンが未設定です');
+      showStatus('error', '⚠️ GitHubトークンが未設定です。上のトークン設定を開いて保存してください');
       document.getElementById('patDetails').open = true;
       return;
     }
-    if (!filename || !filename.endsWith('.md')) {
-      showStatus('error', '⚠️ ファイル名を確認してください（YYYYMMDD-[nikkei|deep|memo|weekly].md 形式）');
+    if (!filename) {
+      showStatus('error', '⚠️ ファイル名が未入力です。「自動入力」ボタンを押してください');
+      return;
+    }
+    if (!filename.endsWith('.md')) {
+      showStatus('error', '⚠️ ファイル名は .md で終わる必要があります（例：20260605-weekly.md）');
       return;
     }
     if (!/^\d{8}-/.test(filename)) {
-      showStatus('error', '⚠️ ファイル名は YYYYMMDD- で始まる必要があります');
+      showStatus('error', '⚠️ ファイル名は YYYYMMDD- で始まる必要があります（例：20260605-weekly.md）');
       return;
     }
-    if (!rawInput.trim() || !rawInput.includes('---')) {
-      showStatus('error', '⚠️ .mdファイル内容を確認してください（フロントマターが必要）');
+    if (!content.trim() || content.indexOf('---') === -1) {
+      showStatus('error', '⚠️ .md 内容またはフロントマター（---）が見つかりません');
       return;
-    }
-
-    // ── フロントマター自動補正 ──
-    const norm = normalizeArticle(rawInput);
-    if (norm.error) {
-      showStatus('error', '❌ ' + norm.error);
-      return;
-    }
-    if (norm.warnings.length) {
-      showStatus('error',
-        '❌ フロントマターに問題があるため投稿を中止しました：\n・' +
-        norm.warnings.join('\n・') +
-        '\n\n内容を修正してから再度お試しください。');
-      return;
-    }
-    const content = norm.content;
-    // 補正結果をテキストエリアに反映（ユーザーが確認できるように）
-    if (norm.fixes.length) {
-      document.getElementById('content').value = content;
     }
 
     btn.disabled = true;
-    const fixNote = norm.fixes.length
-      ? '（自動補正：' + norm.fixes.join('、') + '）'
-      : '';
-    showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...' + fixNote);
+    showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...');
 
     try {
-      const path   = `src/content/blog/${filename}`;
-      const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
-      const hdrs   = makeHeaders(pat);
-      const { title } = parseFrontmatter(content);
-      const commitMsg = title ? `feat: ${title}` : `feat: ${filename.replace('.md','')}を追加`;
+      var path   = 'src/content/blog/' + filename;
+      var apiUrl = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + path;
+      var hdrs   = makeHeaders(pat);
+      var p      = parseFrontmatter(content);
+      var msg    = p.title ? ('feat: ' + p.title) : ('feat: ' + filename.replace('.md', '') + 'を追加');
 
-      let sha;
-      const check = await fetch(apiUrl, { headers: hdrs });
-      if (check.ok) { sha = (await check.json()).sha; }
+      var sha;
+      var chk = await fetch(apiUrl, { headers: hdrs });
+      if (chk.ok) { sha = (await chk.json()).sha; }
 
-      const body = { message: commitMsg, content: toBase64(content), branch: BRANCH };
+      var body = { message: msg, content: toBase64(content), branch: BRANCH };
       if (sha) body.sha = sha;
 
-      const res = await fetch(apiUrl, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
+      var res = await fetch(apiUrl, { method: 'PUT', headers: hdrs, body: JSON.stringify(body) });
 
       if (res.ok) {
-        const action  = sha ? '更新' : '新規投稿';
-        const slug    = filename.replace(/^\d{8}-/, '').replace('.md', '');
-        const ghUrl   = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${path}`;
-        const siteUrl = `https://nikkei-note.com/blog/${slug}/`;
-        const fixLine = norm.fixes.length
-          ? `🛠 自動補正：${norm.fixes.join('、')}\n`
-          : '';
+        var action  = sha ? '更新' : '新規投稿';
+        var slug    = filename.replace(/^\d{8}-/, '').replace('.md', '');
+        var ghUrl   = 'https://github.com/' + OWNER + '/' + REPO + '/blob/' + BRANCH + '/' + path;
+        var siteUrl = 'https://nikkei-note.com/blog/' + slug + '/';
         showStatus('success',
-          `✅ ${action}しました！\n` +
-          `📄 <strong>${filename}</strong>\n` +
-          fixLine +
-          `🔗 <a href="${ghUrl}" target="_blank" rel="noopener">GitHubで確認する</a>\n` +
-          `🌐 ビルド完了後（約1〜2分）：<a href="${siteUrl}" target="_blank" rel="noopener">記事ページを開く</a>`
+          '✅ ' + action + 'しました！\n' +
+          '📄 <strong>' + filename + '</strong>\n' +
+          '🔗 <a href="' + ghUrl + '" target="_blank" rel="noopener">GitHubで確認する</a>\n' +
+          '🌐 ビルド完了後（1〜2分）：<a href="' + siteUrl + '" target="_blank" rel="noopener">記事ページを開く</a>'
         );
         document.getElementById('filename').value = '';
         document.getElementById('content').value  = '';
         document.getElementById('parsedInfo').style.display = 'none';
-
       } else {
-        const err = await res.json().catch(()=>({}));
-        const msgs = {
+        var ej = {};
+        try { ej = await res.json(); } catch(e2) {}
+        var em = {
           401: '❌ 認証エラー（401）：トークンが無効または期限切れです',
           403: '❌ 権限エラー（403）：Contents: Read and write 権限を確認してください',
           404: '❌ 見つかりません（404）：リポジトリ名・トークン権限を確認してください',
-          422: `❌ バリデーションエラー（422）：${err.message || ''}`,
+          422: '❌ バリデーションエラー（422）：' + (ej.message || '')
         };
-        showStatus('error', msgs[res.status] || `❌ エラー（${res.status}）：${err.message || '投稿に失敗しました'}`);
+        showStatus('error', em[res.status] || ('❌ エラー（' + res.status + '）：' + (ej.message || '投稿に失敗しました')));
       }
-
     } catch(e) {
-      showStatus('error', `❌ 通信エラー：${e.message}`);
+      showStatus('error', '❌ 通信エラー：' + e.message);
     } finally {
       btn.disabled = false;
     }
   }
 
-  /* ── ユーティリティ ── */
   function toBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
-  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  function showStatus(type, message) {
-    const el = document.getElementById('status');
-    el.className = `status ${type}`;
-    el.innerHTML = message.replace(/\n/g, '<br>');
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showStatus(type, msg) {
+    var el = document.getElementById('status');
+    var map = { success: 'st-success', error: 'st-error', loading: 'st-loading' };
+    el.className = map[type] || 'st-error';
+    el.innerHTML = msg.replace(/\n/g, '<br>');
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 </script>
