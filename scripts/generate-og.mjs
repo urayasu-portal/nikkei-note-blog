@@ -134,7 +134,7 @@ async function main() {
   }
 
   console.log('\nDone: ' + success + ' generated, ' + failed + ' failed.');
-  if (failed > 0) process.exit(1);
+  if (failed > 0) console.warn('WARNING: ' + failed + ' OG image(s) failed — continuing build without them.');
 }
 
 main();
