@@ -3,7 +3,6 @@ title: '日銀ETF買い入れとは？終了後も続く市場への影響を解
 description: '日銀ETF買い入れとは、日銀が金融緩和の一環として株式ETFを購入した政策です。2024年の終了後も残る約70兆円の保有残高・出口戦略・市場への構造的影響まで解説します。'
 pubDate: '2026-06-12'
 category: 'glossary'
-tags: ['日銀ETF買い入れ', '日銀', '需給', '量的緩和']
 relatedDeep: ''
 relatedGlossary:
   - '量的緩和・QT'
