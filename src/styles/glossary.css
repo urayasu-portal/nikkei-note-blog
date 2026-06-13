@@ -928,3 +928,95 @@
   cursor: default;
   font-weight: 400;
 }
+
+/* ─── 前後ナビ ─── */
+.g-post-nav {
+  border-top: 1px solid var(--border);
+  padding: 24px 36px;
+}
+.g-post-nav-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.g-post-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--blue-2);
+  transition: box-shadow .15s;
+}
+.g-post-nav-item:hover { box-shadow: var(--shadow-sm); }
+.g-post-nav-next { text-align: right; }
+.g-post-nav-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.g-post-nav-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.5;
+}
+
+/* ─── 相場ノートCTA ─── */
+.g-nikkei-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #10233f 0%, #17375f 100%);
+  color: #fff;
+  margin: 0 36px 36px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.g-nikkei-cta:hover { opacity: .9; }
+.g-nikkei-cta-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.15);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.g-nikkei-cta-label {
+  font-size: 11px;
+  color: #9ec4e8;
+  margin-bottom: 3px;
+}
+.g-nikkei-cta-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.g-nikkei-cta-arrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: #9ec4e8;
+  flex-shrink: 0;
+}
+
+/* ─── サイドバー 全一覧リンク ─── */
+.g-side-all-link {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--navy);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── レスポンシブ対応 ─── */
+@media (max-width: 640px) {
+  .g-post-nav { padding: 16px; }
+  .g-post-nav-inner { grid-template-columns: 1fr; }
+  .g-nikkei-cta { margin: 0 0 24px; border-radius: 10px; }
+}

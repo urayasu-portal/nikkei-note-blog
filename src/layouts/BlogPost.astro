@@ -67,10 +67,21 @@ const relatedPosts = allPosts
   .filter(p => p.data.category === category && p.id !== currentSlug)
   .slice(0, 3);
 
-// 用語解説記事（存在する場合のみ表示）
-const glossaryPosts = allPosts
-  .filter(p => p.data.category === 'glossary')
-  .slice(0, 4);
+// 用語解説記事（タグ関連を優先、なければ最新）
+const currentTags = (Astro.props.tags ?? []) as string[];
+const allGlossary = allPosts.filter(p => p.data.category === 'glossary');
+const tagRelatedGlossary = allGlossary.filter(p =>
+  p.data.tags?.some(t => currentTags.includes(t))
+).slice(0, 4);
+const glossaryPosts = tagRelatedGlossary.length >= 2
+  ? tagRelatedGlossary
+  : allGlossary.slice(0, 4);
+
+// 前後の記事（同カテゴリー）
+const sameCatPosts = allPosts.filter(p => p.data.category === category);
+const currentIdx = sameCatPosts.findIndex(p => p.id === currentSlug);
+const prevPost = currentIdx >= 0 && currentIdx < sameCatPosts.length - 1 ? sameCatPosts[currentIdx + 1] : undefined;
+const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
 ---
 
 <html lang="ja">
@@ -453,6 +464,43 @@ const glossaryPosts = allPosts
       }
       .glossary-link:hover { background: #d5e8f8; }
 
+      /* 前後記事ナビ */
+      .post-nav {
+        border-top: 1px solid var(--border);
+        margin-top: 28px;
+        padding-top: 20px;
+      }
+      .post-nav-inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .post-nav-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--blue-2);
+        transition: box-shadow .15s;
+      }
+      .post-nav-item:hover { box-shadow: var(--shadow); }
+      .post-nav-next { text-align: right; }
+      .post-nav-label {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .post-nav-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--navy);
+        line-height: 1.5;
+      }
+      @media (max-width: 860px) {
+        .post-nav-inner { grid-template-columns: 1fr; }
+      }
+
       /* アフィリエイトCTA */
       .aff-cta {
         background: linear-gradient(135deg, #f7fbff, #eaf2fb);
@@ -741,6 +789,26 @@ const glossaryPosts = allPosts
                   {glossaryPosts.map(post => (
                     <a class="glossary-link" href={`/blog/${post.id}/`}>{post.data.title}</a>
                   ))}
+                </div>
+              </div>
+            )}
+
+            <!-- 前後記事ナビ -->
+            {(prevPost || nextPost) && (
+              <div class="post-nav">
+                <div class="post-nav-inner">
+                  {prevPost ? (
+                    <a class="post-nav-item post-nav-prev" href={`/blog/${prevPost.id}/`}>
+                      <span class="post-nav-label">← 前の記事</span>
+                      <span class="post-nav-title">{prevPost.data.title}</span>
+                    </a>
+                  ) : <div />}
+                  {nextPost ? (
+                    <a class="post-nav-item post-nav-next" href={`/blog/${nextPost.id}/`}>
+                      <span class="post-nav-label">次の記事 →</span>
+                      <span class="post-nav-title">{nextPost.data.title}</span>
+                    </a>
+                  ) : <div />}
                 </div>
               </div>
             )}

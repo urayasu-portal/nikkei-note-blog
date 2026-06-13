@@ -21,7 +21,7 @@ const readTimeMin = Math.max(1, Math.ceil(plainText.length / 500));
 ---
 
 {post.data.category === 'glossary' ? (
-  <GlossaryPost {...post.data} readTimeMin={readTimeMin}>
+  <GlossaryPost {...post.data} readTimeMin={readTimeMin} body={post.body ?? ''}>
     <Content />
   </GlossaryPost>
 ) : (

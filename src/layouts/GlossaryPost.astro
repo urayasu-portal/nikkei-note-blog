@@ -5,7 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import '../styles/glossary.css';
 
-type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
+type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number; body?: string };
 
 const {
   title,
@@ -16,6 +16,7 @@ const {
   relatedDeep,
   relatedGlossary,
   readTimeMin,
+  body = '',
 } = Astro.props;
 
 const formattedDate = pubDate
@@ -27,6 +28,9 @@ const currentSlug = currentPath.replace(/^\/blog\//, '').replace(/\/$/, '');
 const ogpImage = currentSlug ? `/og/${currentSlug}.png` : '/blog-placeholder-1.jpg';
 
 const allPosts = await getCollection('blog');
+const sortedGlossary = allPosts
+  .filter((p) => p.data.category === 'glossary')
+  .sort((a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf());
 
 // 関連深掘りノート
 let relatedDeepPost: CollectionEntry<'blog'> | undefined;
@@ -42,7 +46,35 @@ const relatedGlossaryPosts = (relatedGlossary ?? []).map((termName) => {
   return { name: termName, post };
 });
 
+// 前後の用語解説（同カテゴリー内）
+const currentIdx = sortedGlossary.findIndex((p) => p.id === currentSlug);
+const prevGlossary = currentIdx > 0 ? sortedGlossary[currentIdx - 1] : undefined;
+const nextGlossary = currentIdx >= 0 && currentIdx < sortedGlossary.length - 1 ? sortedGlossary[currentIdx + 1] : undefined;
+
+// 最新の日経ノート
+const latestNikkei = allPosts
+  .filter((p) => p.data.category === 'nikkei')
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())[0];
+
 const hasRelated = relatedDeepPost || relatedGlossaryPosts.length > 0;
+
+// caution-box から「誤：X 正：Y」ペアを抽出して FAQPage 用に整形
+const faqItems: { question: string; answer: string }[] = [];
+const cautionBlocks = body.match(/<div class="caution-box">([\s\S]*?)<\/div>/g) ?? [];
+for (const block of cautionBlocks) {
+  const text = block.replace(/<[^>]+>/g, '').replace(/⚠\s*よくある誤解\s*/g, '').trim();
+  const wrongMatch = text.match(/誤[：:]\s*(.+?)(?=正[：:]|$)/s);
+  const rightMatch = text.match(/正[：:]\s*(.+)/s);
+  if (wrongMatch && rightMatch) {
+    faqItems.push({
+      question: wrongMatch[1].trim(),
+      answer: rightMatch[1].trim(),
+    });
+  }
+}
+
+// 用語名を title から抽出（「〇〇とは？...」の「〇〇」部分）
+const termName = title.replace(/とは.*$/s, '').trim();
 ---
 
 <html lang="ja">
@@ -59,6 +91,7 @@ const hasRelated = relatedDeepPost || relatedGlossaryPosts.length > 0;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;800&display=swap" rel="stylesheet">
 
+    <!-- Article 構造化データ -->
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Article",
@@ -73,6 +106,37 @@ const hasRelated = relatedDeepPost || relatedGlossaryPosts.length > 0;
       "mainEntityOfPage": { "@type": "WebPage", "@id": Astro.url.href }
     })} />
 
+    <!-- DefinedTerm 構造化データ（用語定義） -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "DefinedTerm",
+      "name": termName,
+      "description": description,
+      "url": Astro.url.href,
+      "inDefinedTermSet": {
+        "@type": "DefinedTermSet",
+        "name": "株式投資用語集",
+        "url": "https://nikkei-note.com/blog/category/glossary/"
+      }
+    })} />
+
+    <!-- FAQPage 構造化データ（よくある誤解） -->
+    {faqItems.length > 0 && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqItems.map(item => ({
+          "@type": "Question",
+          "name": `${item.question}は正しい？`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.answer
+          }
+        }))
+      })} />
+    )}
+
+    <!-- BreadcrumbList 構造化データ -->
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -132,47 +196,57 @@ const hasRelated = relatedDeepPost || relatedGlossaryPosts.length > 0;
             <slot />
           </div>
 
+          <!-- 前後の用語解説ナビ -->
+          {(prevGlossary || nextGlossary) && (
+            <div class="g-post-nav">
+              <div class="g-post-nav-inner">
+                {prevGlossary ? (
+                  <a class="g-post-nav-item g-post-nav-prev" href={`/blog/${prevGlossary.id}/`}>
+                    <span class="g-post-nav-label">← 前の用語</span>
+                    <span class="g-post-nav-title">{prevGlossary.data.title.replace(/とは.*/, '')}</span>
+                  </a>
+                ) : <div />}
+                {nextGlossary ? (
+                  <a class="g-post-nav-item g-post-nav-next" href={`/blog/${nextGlossary.id}/`}>
+                    <span class="g-post-nav-label">次の用語 →</span>
+                    <span class="g-post-nav-title">{nextGlossary.data.title.replace(/とは.*/, '')}</span>
+                  </a>
+                ) : <div />}
+              </div>
+            </div>
+          )}
+
+          <!-- 今日の相場ノートCTA -->
+          {latestNikkei && (
+            <a class="g-nikkei-cta" href={`/blog/${latestNikkei.id}/`}>
+              <div class="g-nikkei-cta-icon">▧</div>
+              <div>
+                <div class="g-nikkei-cta-label">今日の相場ノートを読む</div>
+                <div class="g-nikkei-cta-title">{latestNikkei.data.title}</div>
+              </div>
+              <span class="g-nikkei-cta-arrow">→</span>
+            </a>
+          )}
+
         </article>
       </main>
 
       <!-- サイドバー -->
       <aside class="g-sidebar">
 
-        <!-- 相場ウィジェット（静的） -->
-        <div class="g-side-card">
-          <h3>今日の相場</h3>
-          <div class="g-market-list">
-            <div class="g-market-row">
-              <span class="g-market-label">日経平均<small>前日終値</small></span>
-              <div class="g-market-value">
-                38,487<br>
-                <span class="g-plus">+213 (+0.56%)</span>
+        <!-- 最新の相場ノートへのリンク -->
+        {latestNikkei && (
+          <div class="g-side-card">
+            <h3>今日の相場ノート</h3>
+            <a class="g-related-item" href={`/blog/${latestNikkei.id}/`}>
+              <div class="g-related-meta">
+                {latestNikkei.data.pubDate.getFullYear()}年{latestNikkei.data.pubDate.getMonth() + 1}月{latestNikkei.data.pubDate.getDate()}日
               </div>
-            </div>
-            <div class="g-market-row">
-              <span class="g-market-label">TOPIX<small>前日終値</small></span>
-              <div class="g-market-value">
-                2,736<br>
-                <span class="g-plus">+11 (+0.41%)</span>
-              </div>
-            </div>
-            <div class="g-market-row">
-              <span class="g-market-label">ドル円<small>15時30分</small></span>
-              <div class="g-market-value">
-                146.82<br>
-                <span class="g-minus">-0.34 (-0.23%)</span>
-              </div>
-            </div>
-            <div class="g-market-row">
-              <span class="g-market-label">NYダウ<small>前日終値</small></span>
-              <div class="g-market-value">
-                43,128<br>
-                <span class="g-plus">+84 (+0.20%)</span>
-              </div>
-            </div>
+              <div class="g-related-title">{latestNikkei.data.title}</div>
+            </a>
+            <a class="g-side-all-link" href="/blog/category/nikkei/">日経ノート一覧を見る →</a>
           </div>
-          <p class="g-market-note">※ 表示値は静的サンプルです。最新値は各証券会社サイトでご確認ください。</p>
-        </div>
+        )}
 
         <!-- 目次（JS生成） -->
         <div class="g-side-card" id="toc-card">
