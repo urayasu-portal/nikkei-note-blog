@@ -6,9 +6,43 @@ import { SITE_TITLE } from '../../../consts';
 import '../../../styles/glossary.css';
 
 const allPosts = await getCollection('blog');
+
+// 五十音順ソート用：読み行の優先順位
+const kanaOrder = ['あ','か','さ','た','な','は','ま','や','ら','わ'];
+function getSortKey(postId: string, titleFirstChar: string): string {
+  if (/[A-Za-z]/.test(titleFirstChar)) return 'zz_' + titleFirstChar.toUpperCase();
+  const kataMap: Record<string, string> = {
+    'アイウエオ': 'あ', 'カキクケコガギグゲゴ': 'か', 'サシスセソザジズゼゾ': 'さ',
+    'タチツテトダヂヅデド': 'た', 'ナニヌネノ': 'な', 'ハヒフヘホバビブベボパピプペポ': 'は',
+    'マミムメモ': 'ま', 'ヤユヨ': 'や', 'ラリルレロ': 'ら', 'ワヲン': 'わ',
+  };
+  for (const [chars, row] of Object.entries(kataMap)) {
+    if (chars.includes(titleFirstChar)) return String(kanaOrder.indexOf(row)).padStart(2,'0') + '_' + postId;
+  }
+  const r = postId.replace(/^\d{8}-glossary-/, '').toLowerCase();
+  const s3 = r.slice(0,3), s2 = r.slice(0,2), s1 = r.slice(0,1);
+  let row = 'わ';
+  if (['shi','sha','shu','she','sho'].includes(s3)) row = 'さ';
+  else if (['chi','cha','chu','che','cho','tsu'].includes(s3)) row = 'た';
+  else if (['ka','ki','ku','ke','ko','ga','gi','gu','ge','go','ky'].includes(s2)) row = 'か';
+  else if (['sa','si','su','se','so','za','zi','zu','ze','zo'].includes(s2)) row = 'さ';
+  else if (['ta','ti','te','to','da','di','du','de','do'].includes(s2)) row = 'た';
+  else if (['na','ni','nu','ne','no'].includes(s2)) row = 'な';
+  else if (['ha','hi','hu','fu','he','ho','ba','bi','bu','be','bo','pa','pi','pu','pe','po'].includes(s2)) row = 'は';
+  else if (['ma','mi','mu','me','mo'].includes(s2)) row = 'ま';
+  else if (['ya','yu','yo'].includes(s2)) row = 'や';
+  else if (['ra','ri','ru','re','ro'].includes(s2)) row = 'ら';
+  else if (['a','i','u','e','o'].includes(s1)) row = 'あ';
+  return String(kanaOrder.indexOf(row)).padStart(2,'0') + '_' + r;
+}
+
 const glossaryPosts = allPosts
   .filter((p) => p.data.category === 'glossary')
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  .sort((a, b) => {
+    const ka = getSortKey(a.id, a.data.title.charAt(0));
+    const kb = getSortKey(b.id, b.data.title.charAt(0));
+    return ka.localeCompare(kb);
+  });
 
 const totalCount = glossaryPosts.length;
 
