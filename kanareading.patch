@@ -1,0 +1,138 @@
+diff --git a/src/pages/blog/category/glossary.astro b/src/pages/blog/category/glossary.astro
+index 697e5fd..4f10908 100644
+--- a/src/pages/blog/category/glossary.astro
++++ b/src/pages/blog/category/glossary.astro
+@@ -48,31 +48,75 @@ const sections = Object.keys(sectionMap).map((name) => ({
+   posts: glossaryPosts.filter((p) => classifyPost(p.data.tags) === name),
+ }));
+ 
+-// 五十音・アルファベット判定（ひらがな＋カタカナ両対応）
+-const kanaRows: { label: string; chars: string }[] = [
+-  { label: 'あ', chars: 'あいうえおアイウエオ' },
+-  { label: 'か', chars: 'かきくけこカキクケコ' },
+-  { label: 'さ', chars: 'さしすせそサシスセソ' },
+-  { label: 'た', chars: 'たちつてとタチツテト' },
+-  { label: 'な', chars: 'なにぬねのナニヌネノ' },
+-  { label: 'は', chars: 'はひふへほハヒフヘホ' },
+-  { label: 'ま', chars: 'まみむめもマミムメモ' },
+-  { label: 'や', chars: 'やゆよヤユヨ' },
+-  { label: 'ら', chars: 'らりるれろラリルレロ' },
+-  { label: 'わ', chars: 'わをんワヲン' },
++// 読み行を判定（アルファベット始まり→アルファベット索引、かな/カナ始まり→五十音、漢字はスラッグのローマ字から推定）
++function getIndexKey(postId: string, titleFirstChar: string): string {
++  // ASCIIアルファベット始まり → アルファベット索引
++  if (/[A-Za-z]/.test(titleFirstChar)) return titleFirstChar.toUpperCase();
++
++  // カタカナ始まり → 行マッピング
++  const kataMap: Record<string, string> = {
++    'アイウエオ': 'あ',
++    'カキクケコガギグゲゴ': 'か',
++    'サシスセソザジズゼゾ': 'さ',
++    'タチツテトダヂヅデド': 'た',
++    'ナニヌネノ': 'な',
++    'ハヒフヘホバビブベボパピプペポ': 'は',
++    'マミムメモ': 'ま',
++    'ヤユヨ': 'や',
++    'ラリルレロ': 'ら',
++    'ワヲン': 'わ',
++  };
++  for (const [chars, row] of Object.entries(kataMap)) {
++    if (chars.includes(titleFirstChar)) return row;
++  }
++
++  // 漢字・その他 → スラッグのローマ字から推定
++  const romaji = postId.replace(/^\d{8}-glossary-/, '').toLowerCase();
++  const s3 = romaji.slice(0, 3);
++  const s2 = romaji.slice(0, 2);
++  const s1 = romaji.slice(0, 1);
++
++  if (['shi','sha','shu','she','sho'].includes(s3)) return 'さ';
++  if (['chi','cha','chu','che','cho','tsu'].includes(s3)) return 'た';
++
++  if (['ka','ki','ku','ke','ko','ga','gi','gu','ge','go','ky'].includes(s2)) return 'か';
++  if (['sa','si','su','se','so','za','zi','zu','ze','zo'].includes(s2)) return 'さ';
++  if (['ta','ti','te','to','da','di','du','de','do'].includes(s2)) return 'た';
++  if (['na','ni','nu','ne','no'].includes(s2)) return 'な';
++  if (['ha','hi','hu','fu','he','ho','ba','bi','bu','be','bo','pa','pi','pu','pe','po'].includes(s2)) return 'は';
++  if (['ma','mi','mu','me','mo'].includes(s2)) return 'ま';
++  if (['ya','yu','yo'].includes(s2)) return 'や';
++  if (['ra','ri','ru','re','ro'].includes(s2)) return 'ら';
++  if (['wa','wo'].includes(s2)) return 'わ';
++  if (['a','i','u','e','o'].includes(s1)) return 'あ';
++
++  return s1.toUpperCase();
++}
++
++const kanaRows: { label: string; key: string }[] = [
++  { label: 'あ', key: 'あ' },
++  { label: 'か', key: 'か' },
++  { label: 'さ', key: 'さ' },
++  { label: 'た', key: 'た' },
++  { label: 'な', key: 'な' },
++  { label: 'は', key: 'は' },
++  { label: 'ま', key: 'ま' },
++  { label: 'や', key: 'や' },
++  { label: 'ら', key: 'ら' },
++  { label: 'わ', key: 'わ' },
+ ];
+ const alphaGroups: { label: string; chars: string }[] = [
+-  { label: 'A–F', chars: 'abcdefABCDEF' },
+-  { label: 'G–L', chars: 'ghijklGHIJKL' },
+-  { label: 'M–R', chars: 'mnopqrMNOPQR' },
+-  { label: 'S–Z', chars: 'stuvwxyzSTUVWXYZ' },
++  { label: 'A–F', chars: 'ABCDEF' },
++  { label: 'G–L', chars: 'GHIJKL' },
++  { label: 'M–R', chars: 'MNOPQR' },
++  { label: 'S–Z', chars: 'STUVWXYZ' },
+ ];
+ 
+-const firstChars = new Set(glossaryPosts.map((p) => p.data.title.charAt(0)));
++const indexKeys = new Set(glossaryPosts.map((p) => getIndexKey(p.id, p.data.title.charAt(0))));
+ 
+-function rowHasItems(chars: string): boolean {
+-  for (const ch of firstChars) {
+-    if (chars.includes(ch)) return true;
++function rowHasItems(matchStr: string): boolean {
++  for (const key of indexKeys) {
++    if (matchStr.includes(key)) return true;
+   }
+   return false;
+ }
+@@ -194,7 +238,7 @@ const picks = [
+                     data-title={post.data.title}
+                     data-desc={post.data.description ?? ''}
+                     data-tags={(post.data.tags ?? []).join(' ')}
+-                    data-first={post.data.title.charAt(0)}
++                    data-index-key={getIndexKey(post.id, post.data.title.charAt(0))}
+                   >
+                     <div class="gi-card-top">
+                       <div class="gi-card-name">{post.data.title.replace(/とは.*/, '').replace(/？.*/, '')}</div>
+@@ -230,11 +274,11 @@ const picks = [
+           <div class="gi-index-group-label">五十音</div>
+           <div class="gi-index-buttons" id="gi-kana-btns">
+             {kanaRows.map((row) => {
+-              const has = rowHasItems(row.chars);
++              const has = rowHasItems(row.key);
+               return (
+                 <button
+                   class={`gi-index-btn${has ? ' has-items' : ' empty'}`}
+-                  data-chars={row.chars}
++                  data-chars={row.key}
+                   disabled={!has}
+                 >
+                   {row.label}
+@@ -296,12 +340,12 @@ const picks = [
+             const title  = (card.dataset.title  ?? '').toLowerCase();
+             const desc   = (card.dataset.desc   ?? '').toLowerCase();
+             const tags   = (card.dataset.tags   ?? '').toLowerCase();
+-            const first  = card.dataset.first   ?? '';
++            const indexKey = card.dataset.indexKey ?? '';
+             const section = card.closest<HTMLElement>('.gi-section')?.dataset.section ?? '';
+ 
+             const matchSearch  = !query    || title.includes(query) || desc.includes(query) || tags.includes(query);
+             const matchSection = activeSection === 'all' || section === activeSection;
+-            const matchChars   = !activeChars || activeChars.includes(first);
++            const matchChars   = !activeChars || activeChars.includes(indexKey);
+ 
+             const visible = matchSearch && matchSection && matchChars;
+             card.style.display = visible ? '' : 'none';
