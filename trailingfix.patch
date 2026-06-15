@@ -1,0 +1,24 @@
+diff --git a/astro.config.mjs b/astro.config.mjs
+index d6db815..b683a8a 100644
+--- a/astro.config.mjs
++++ b/astro.config.mjs
+@@ -8,6 +8,7 @@ import cloudflare from "@astrojs/cloudflare";
+ // https://astro.build/config
+ export default defineConfig({
+ 	site: "https://nikkei-note.com",
++	trailingSlash: "always",
+ 	integrations: [mdx(), sitemap()],
+ 	adapter: cloudflare({
+ 		platformProxy: {
+diff --git a/public/_redirects b/public/_redirects
+new file mode 100644
+index 0000000..3903d8a
+--- /dev/null
++++ b/public/_redirects
+@@ -0,0 +1,6 @@
++# 末尾スラッシュなし → ありへの正規化（重複コンテンツ防止）
++/blog/:slug  /blog/:slug/  301
++/blog/category/:cat  /blog/category/:cat/  301
++/about  /about/  301
++/privacy  /privacy/  301
++/contact  /contact/  301
