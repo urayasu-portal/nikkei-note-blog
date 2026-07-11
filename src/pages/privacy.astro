@@ -5,20 +5,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>プライバシーポリシー｜本日の日本株ノート</title>
+  <title>プライバシーポリシー｜今日の日本株ノート</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --navy: #10233f;
       --border: #dbe3ef;
       --muted: #6b7280;
-      --shadow: 0 14px 36px rgba(16, 35, 63, .08);
+      --shadow: 0 1px 2px rgba(16, 35, 63, .05);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
-      color: #1f2937;
-      background: #f7fbff;
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+      color: #1c2534;
+      background: #f7f9fb;
       line-height: 1.9;
     }
     a { color: var(--navy); }
@@ -41,20 +44,24 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 800;
+      gap: 10px;
+      font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: .04em;
       color: var(--navy);
       text-decoration: none;
     }
     .brand-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--navy), #315d91);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--navy);
       display: grid;
       place-items: center;
       color: #fff;
-      font-size: 20px;
+      font-size: 15px;
+      font-weight: 700;
     }
     .container {
       max-width: 860px;
@@ -64,12 +71,14 @@
     .card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 10px;
       padding: 40px 48px;
       box-shadow: var(--shadow);
     }
     h1 {
-      font-size: 28px;
+      font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: 26px;
+      font-weight: 700;
       color: var(--navy);
       margin: 0 0 8px;
     }
@@ -79,11 +88,14 @@
       margin-bottom: 32px;
     }
     h2 {
+      font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
       font-size: 18px;
+      font-weight: 700;
       color: var(--navy);
       margin: 32px 0 10px;
-      padding-left: 12px;
-      border-left: 4px solid var(--navy);
+      padding: 12px 24px 0 0;
+      border-top: 2px solid var(--navy);
+      display: inline-block;
     }
     p { margin: 0 0 16px; font-size: 15px; }
     ul { margin: 0 0 16px; padding-left: 1.5em; }
@@ -104,7 +116,7 @@
   <header>
     <div class="header-inner">
       <a class="brand" href="/">
-        <span class="brand-icon">▧</span>
+        <span class="brand-icon">株</span>
         <span>本日の日本株ノート</span>
       </a>
     </div>

@@ -39,6 +39,15 @@ const formattedDate = pubDate
   ? `${pubDate.getFullYear()}年${pubDate.getMonth() + 1}月${pubDate.getDate()}日`
   : '';
 
+// '68557.73' → '68,557.73'（桁区切り。数値でなければそのまま）
+const fmtNum = (s?: string) => {
+  if (!s) return '';
+  const n = Number(s);
+  if (!isFinite(n)) return s;
+  const dec = s.split('.')[1]?.length ?? 0;
+  return n.toLocaleString('ja-JP', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+};
+
 // URL から slug を抽出してコンパニオン記事を検索
 const currentPath = Astro.url.pathname;
 const currentSlug = currentPath.replace(/^\/blog\//, '').replace(/\/$/, '');
@@ -737,19 +746,19 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
               {nikkei && (
                 <div class="mchip">
                   <span class="mchip-l">日経平均</span>
-                  <span class="mchip-v">{nikkei}</span>
+                  <span class="mchip-v">{fmtNum(nikkei)}</span>
                 </div>
               )}
               {topix && (
                 <div class="mchip">
                   <span class="mchip-l">TOPIX</span>
-                  <span class="mchip-v">{topix}</span>
+                  <span class="mchip-v">{fmtNum(topix)}</span>
                 </div>
               )}
               {usd && (
                 <div class="mchip">
                   <span class="mchip-l">ドル円</span>
-                  <span class="mchip-v">{usd}</span>
+                  <span class="mchip-v">{fmtNum(usd)}</span>
                 </div>
               )}
             </div>
@@ -869,31 +878,31 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
               {nikkei && (
                 <div class="market-row">
                   <span class="market-label">日経平均<small>{nikkeiDate}終値</small></span>
-                  <span class="market-value">{nikkei}</span>
+                  <span class="market-value">{fmtNum(nikkei)}</span>
                 </div>
               )}
               {topix && (
                 <div class="market-row">
                   <span class="market-label">TOPIX<small>{topixDate}終値</small></span>
-                  <span class="market-value">{topix}</span>
+                  <span class="market-value">{fmtNum(topix)}</span>
                 </div>
               )}
               {usd && (
                 <div class="market-row">
                   <span class="market-label">ドル円<small>{(usdDate ?? '').split('T')[0]} 15時30分</small></span>
-                  <span class="market-value">{usd}</span>
+                  <span class="market-value">{fmtNum(usd)}</span>
                 </div>
               )}
               {dow && (
                 <div class="market-row">
                   <span class="market-label">NYダウ<small>{dowDate}終値</small></span>
-                  <span class="market-value">{dow}</span>
+                  <span class="market-value">{fmtNum(dow)}</span>
                 </div>
               )}
               {nasdaq && (
                 <div class="market-row">
                   <span class="market-label">NASDAQ<small>{nasdaqDate}終値</small></span>
-                  <span class="market-value">{nasdaq}</span>
+                  <span class="market-value">{fmtNum(nasdaq)}</span>
                 </div>
               )}
             </div>

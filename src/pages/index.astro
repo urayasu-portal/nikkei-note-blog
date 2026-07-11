@@ -72,6 +72,13 @@ const jpDate = (s?: string) => {
 // Date → '7/10 金'
 const rowDate = (dt: Date) => `${dt.getMonth() + 1}/${dt.getDate()} ${youbi[dt.getDay()]}`;
 
+// '2026-07-09' → '7/9'
+const shortMD = (s?: string) => {
+  const d = fmtD(s);
+  const m = d.match(/^\d{4}-(\d{2})-(\d{2})/);
+  return m ? `${Number(m[1])}/${Number(m[2])}` : d;
+};
+
 // 「【…】…｜見出し」→「見出し」（用語解説は「〇〇とは｜…」形式のため対象外）
 const stripTitle = (t: string, category?: string) => {
   if (category === 'glossary') return t;
@@ -697,13 +704,13 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
         )}
         {md.dow && (
           <div class="t-item">
-            <span class="l">NYダウ（{fmtD(md.dowDate)}）</span>
+            <span class="l">NYダウ（{shortMD(md.dowDate)}終値）</span>
             <span class="v">{fmtNum(md.dow)}</span>
           </div>
         )}
         {md.nasdaq && (
           <div class="t-item">
-            <span class="l">NASDAQ（{fmtD(md.nasdaqDate)}）</span>
+            <span class="l">NASDAQ（{shortMD(md.nasdaqDate)}終値）</span>
             <span class="v">{fmtNum(md.nasdaq)}</span>
           </div>
         )}
