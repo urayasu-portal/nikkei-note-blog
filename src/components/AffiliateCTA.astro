@@ -1,0 +1,208 @@
+---
+import { affiliates, type AffiliateCategory } from '../data/affiliates';
+
+interface Props {
+  category: AffiliateCategory | AffiliateCategory[];
+  heading?: string;
+  lead?: string;
+}
+
+const { category, heading = '口座開設を検討するなら', lead } = Astro.props;
+const cats = Array.isArray(category) ? category : [category];
+const items = affiliates.filter(
+  (a) => a.status === 'approved' && cats.includes(a.category)
+);
+---
+
+{items.length > 0 && (
+  <section class="aff" aria-label="広告">
+    <div class="aff-head">
+      <span class="aff-pr">PR</span>
+      <h3 class="aff-heading">{heading}</h3>
+    </div>
+    {lead && <p class="aff-lead">{lead}</p>}
+
+    <div class="aff-grid">
+      {items.map((a) => (
+        <div class="aff-card">
+          <div class="aff-card-top">
+            <span class="aff-logo">{a.initial}</span>
+            <div>
+              <span class="aff-tag">{a.tag}</span>
+              <div class="aff-name">{a.name}</div>
+            </div>
+          </div>
+          <div class="aff-headline">{a.headline}</div>
+          <ul class="aff-points">
+            {a.points.map((p) => <li>{p}</li>)}
+          </ul>
+          <a class="aff-btn" href={a.href} target="_blank" rel="sponsored nofollow noopener">
+            {a.cta}
+            <span aria-hidden="true">→</span>
+          </a>
+          {a.beacon && (
+            <img class="aff-beacon" src={a.beacon} width="1" height="1" alt="" />
+          )}
+        </div>
+      ))}
+    </div>
+
+    <p class="aff-note">
+      ※このセクションはアフィリエイト広告（PR）を含みます。手数料やサービスの最新情報は各社の公式サイトでご確認ください。
+    </p>
+  </section>
+)}
+
+<style>
+  .aff {
+    margin-top: 32px;
+    padding: 22px;
+    background: #f7fafd;
+    border: 1px solid #dbe3ef;
+    border-radius: 16px;
+  }
+  .aff .aff-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .aff .aff-pr {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    background: #eef2f7;
+    border: 1px solid #dbe3ef;
+    border-radius: 4px;
+    padding: 1px 7px;
+  }
+  .aff .aff-heading {
+    font-size: 16px;
+    font-weight: 800;
+    color: #10233f;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .aff .aff-lead {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.75;
+    margin: 0 0 16px;
+  }
+  .aff .aff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .aff .aff-card {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  .aff .aff-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .aff .aff-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #10233f, #315d91);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .aff .aff-tag {
+    display: inline-block;
+    font-size: 11px;
+    color: #185fa5;
+    background: #e6f1fb;
+    border-radius: 999px;
+    padding: 1px 9px;
+  }
+  .aff .aff-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: #10233f;
+    margin-top: 4px;
+  }
+  .aff .aff-headline {
+    font-size: 14px;
+    font-weight: 700;
+    color: #17375f;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .aff .aff-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    display: grid;
+    gap: 7px;
+  }
+  .aff .aff-points li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .aff .aff-points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #12805c;
+    font-weight: 900;
+  }
+  .aff .aff-btn {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #10233f;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 11px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .aff .aff-btn:hover {
+    background: #17375f;
+  }
+  .aff .aff-note {
+    font-size: 11px;
+    color: #9199a5;
+    line-height: 1.7;
+    margin: 14px 0 0;
+  }
+  .aff .aff-beacon {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    border: 0;
+  }
+  @media (max-width: 860px) {
+    .aff {
+      padding: 16px;
+    }
+    .aff .aff-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

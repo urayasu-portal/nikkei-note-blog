@@ -3,6 +3,8 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
+import AffiliateCTA from '../components/AffiliateCTA.astro';
+import type { AffiliateCategory } from '../data/affiliates';
 import '../styles/glossary.css';
 
 type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number; body?: string };
@@ -75,6 +77,16 @@ for (const block of cautionBlocks) {
 
 // 用語名を title から抽出（「〇〇とは？...」の「〇〇」部分）
 const termName = title.replace(/とは.*$/s, '').trim();
+
+// お金・口座に直結する用語ページにだけ、文脈の合うアフィリエイトCTAを出す（全ページには出さない）
+const affiliateBySlug: Record<string, { category: AffiliateCategory; heading: string }> = {
+  '20260613-glossary-ideco': { category: 'ideco', heading: 'iDeCoを始めるなら' },
+  '20260608-glossary-nisa': { category: 'securities', heading: 'NISA口座を開くなら' },
+  '20260608-glossary-nisa-waku': { category: 'securities', heading: 'NISA口座を開くなら' },
+  '20260608-glossary-tangen-mimankabu': { category: 'securities', heading: '1株から始められるネット証券' },
+  '20260613-glossary-tokutei-ippan-koza': { category: 'securities', heading: '証券口座を開くなら' },
+};
+const affiliateCTA = affiliateBySlug[currentSlug];
 ---
 
 <html lang="ja">
@@ -214,6 +226,11 @@ const termName = title.replace(/とは.*$/s, '').trim();
                 ) : <div />}
               </div>
             </div>
+          )}
+
+          <!-- アフィリエイトCTA（お金・口座に直結する用語のみ） -->
+          {affiliateCTA && (
+            <AffiliateCTA category={affiliateCTA.category} heading={affiliateCTA.heading} />
           )}
 
           <!-- 今日の相場ノートCTA -->

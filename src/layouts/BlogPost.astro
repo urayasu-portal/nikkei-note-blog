@@ -3,6 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
+import AffiliateCTA from '../components/AffiliateCTA.astro';
 
 type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
 
@@ -501,34 +502,6 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
         .post-nav-inner { grid-template-columns: 1fr; }
       }
 
-      /* アフィリエイトCTA */
-      .aff-cta {
-        background: linear-gradient(135deg, #f7fbff, #eaf2fb);
-        border: 1px solid #c5d9f0;
-        border-radius: 14px;
-        padding: 22px 24px;
-        margin-top: 28px;
-      }
-      .aff-cta p {
-        font-size: 14px;
-        color: #374151;
-        margin-bottom: 12px;
-        line-height: 1.75;
-      }
-      .aff-cta-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--navy);
-        border: 1px solid #5b8dd9;
-        border-radius: 999px;
-        padding: 6px 16px;
-        transition: background .15s;
-      }
-      .aff-cta-link:hover { background: var(--blue); }
-
       /* サイドバー */
       aside {
         display: grid;
@@ -815,11 +788,11 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
 
             <!-- アフィリエイトCTA（nikkei・deep記事のみ） -->
             {(category === 'nikkei' || category === 'deep') && (
-              <div class="aff-cta">
-                <p>日経平均を毎日チェックするなら、見やすい証券アプリを選ぶことも大切です。相場確認に使いやすいアプリの選び方をまとめた記事も、参考にしてみてください。</p>
-                <!-- 証券アプリ比較記事が公開されたらリンクをここに追加 -->
-                <!-- <a class="aff-cta-link" href="/blog/証券アプリ比較記事のslug/">相場確認に使いやすいアプリの選び方はこちら →</a> -->
-              </div>
+              <AffiliateCTA
+                category="securities"
+                heading="ネット証券で口座を開くなら"
+                lead="毎日の相場チェックや実際の売買には、使いやすいネット証券口座があると便利です。日本株の取引に定評のある2社を紹介します。"
+              />
             )}
 
           </div>
