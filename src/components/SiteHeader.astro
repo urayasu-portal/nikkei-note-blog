@@ -8,7 +8,7 @@ const { currentCategory } = Astro.props;
 <header>
   <div class="header-inner">
     <a class="brand" href="/">
-      <span class="brand-icon">▧</span>
+      <span class="brand-icon">株</span>
       <span>今日の日本株ノート</span>
     </a>
     <nav>
@@ -64,22 +64,25 @@ const { currentCategory } = Astro.props;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-weight: 800;
+    font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+    font-weight: 700;
     color: var(--navy);
-    font-size: 15px;
+    font-size: 17px;
+    letter-spacing: .04em;
     white-space: nowrap;
     text-decoration: none;
   }
 
   .brand-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--navy), #315d91);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--navy);
     display: grid;
     place-items: center;
     color: #fff;
-    font-size: 18px;
+    font-size: 15px;
+    font-weight: 700;
     flex-shrink: 0;
   }
 
@@ -176,14 +179,7 @@ const { currentCategory } = Astro.props;
       display: flex;
     }
     header {
-      background: rgba(16, 35, 63, 0.97);
-      border-bottom-color: rgba(255, 255, 255, .12);
-    }
-    .brand {
-      color: #ffffff;
-    }
-    .hamburger span {
-      background: #ffffff;
+      background: rgba(255, 255, 255, 0.96);
     }
   }
 </style>

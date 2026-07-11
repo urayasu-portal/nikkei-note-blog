@@ -15,8 +15,9 @@ const glossaryPosts  = posts.filter(p => p.data.category === 'glossary');
 const glossaryCount  = glossaryPosts.length;
 const latestGlossary = glossaryPosts.slice(0, 3);
 
-// 最新の日経ノートを取得
+// 最新の日経ノートを取得（相場データの供給元）
 const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
+const md = latestNikkeiNote?.data;
 
 // weeklyThemes / checkPoints を持つ最新記事から取得（なければデフォルト値）
 const latestWithThemes = posts.find(p => p.data.weeklyThemes && p.data.weeklyThemes.length > 0);
@@ -44,6 +45,58 @@ posts.forEach(post => {
   if (!categoryCounts[key]) categoryCounts[key] = { ...info, count: 0 };
   categoryCounts[key].count += 1;
 });
+
+// ---- 表示用ヘルパー ----
+const youbi = ['日','月','火','水','木','金','土'];
+
+// ISO日時が混ざっていても日付部分だけ取り出す（usdDate対策）
+const fmtD = (s?: string) => (s ?? '').split('T')[0];
+
+// '68557.73' → '68,557.73'（桁区切り。数値でなければそのまま）
+const fmtNum = (s?: string) => {
+  if (!s) return '';
+  const n = Number(s);
+  if (!isFinite(n)) return s;
+  const dec = s.split('.')[1]?.length ?? 0;
+  return n.toLocaleString('ja-JP', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+};
+
+// '2026-07-10' → '7月10日（金）'
+const jpDate = (s?: string) => {
+  const d = fmtD(s);
+  const dt = d ? new Date(d) : undefined;
+  if (!dt || isNaN(dt.valueOf())) return '';
+  return `${dt.getMonth() + 1}月${dt.getDate()}日（${youbi[dt.getDay()]}）`;
+};
+
+// Date → '7/10 金'
+const rowDate = (dt: Date) => `${dt.getMonth() + 1}/${dt.getDate()} ${youbi[dt.getDay()]}`;
+
+// 「【…】…｜見出し」→「見出し」（用語解説は「〇〇とは｜…」形式のため対象外）
+const stripTitle = (t: string, category?: string) => {
+  if (category === 'glossary') return t;
+  const i = t.indexOf('｜');
+  return i >= 0 ? t.slice(i + 1) : t;
+};
+
+const catBadge: Record<string, { label: string; cls: string }> = {
+  nikkei:   { label: '日経ノート', cls: 'b-nk' },
+  deep:     { label: '深掘り',     cls: 'b-dp' },
+  memo:     { label: '投資メモ',   cls: 'b-mm' },
+  weekly:   { label: '週次まとめ', cls: 'b-wk' },
+  glossary: { label: '用語解説',   cls: 'b-gl' },
+};
+
+const leadDate = latestPost
+  ? `${latestPost.data.pubDate.getFullYear()}年${latestPost.data.pubDate.getMonth() + 1}月${latestPost.data.pubDate.getDate()}日（${youbi[latestPost.data.pubDate.getDay()]}）`
+  : '';
+const leadBadge = latestPost ? (catBadge[latestPost.data.category ?? ''] ?? { label: '最新', cls: 'b-nk' }) : undefined;
+
+// リード記事が日経ノートなら深掘り版コンパニオンを探す
+const leadDatePrefix = latestPost?.id.match(/^(\d{8})/)?.[1];
+const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePrefix
+  ? posts.find(p => p.id === `${leadDatePrefix}-deep`)
+  : undefined;
 ---
 <!doctype html>
 <html lang="ja">
@@ -68,50 +121,43 @@ posts.forEach(post => {
   <style>
     :root {
       --navy: #10233f;
-      --navy-2: #17375f;
+      --navy-2: #2c4a74;
       --blue: #eaf2fb;
       --blue-2: #f5f8fc;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #dbe3ef;
-      --green: #12805c;
+      --text: #1c2534;
+      --muted: #5d6b80;
+      --border: #e2e7ee;
+      --green: #0d7a55;
       --red: #c2410c;
-      --yellow: #fff7d6;
       --white: #ffffff;
-      --shadow: 0 14px 36px rgba(16, 35, 63, .08);
-      --radius: 18px;
+      --serif: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
     }
     * { box-sizing: border-box; }
-    body {
-      overflow-x: clip;
-    }
+    html { overflow-x: hidden; }
     body {
       margin: 0;
-      font-family: "Meiryo UI", "Meiryo", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", sans-serif;
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
       color: var(--text);
-      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 38%, #f8fafc 100%);
+      background: #f7f9fb;
       line-height: 1.8;
+      overflow-x: clip;
     }
     a { color: inherit; text-decoration: none; }
-    .topbar {
-      background: var(--navy);
-      color: #dce7f6;
-      font-size: 13px;
-      padding: 6px 20px;
-      text-align: center;
-    }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ===== マストヘッド ===== */
     header {
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
       backdrop-filter: blur(12px);
-      background: rgba(255,255,255,.88);
+      background: rgba(255,255,255,.94);
       border-bottom: 1px solid var(--border);
     }
     .header-inner {
-      max-width: 1440px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 16px 20px;
+      padding: 14px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -120,331 +166,43 @@ posts.forEach(post => {
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 800;
+      gap: 10px;
+      font-family: var(--serif);
+      font-weight: 700;
       color: var(--navy);
-      letter-spacing: .03em;
+      font-size: 18px;
+      letter-spacing: .04em;
       white-space: nowrap;
     }
     .brand-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--navy), #315d91);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--navy);
       display: grid;
       place-items: center;
       color: #fff;
-      font-size: 22px;
-      box-shadow: 0 8px 22px rgba(16, 35, 63, .22);
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
     }
     nav {
       display: flex;
-      gap: 18px;
+      gap: 20px;
       color: #374151;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
-    .hero {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 42px 24px 28px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(330px, .72fr) minmax(260px, .48fr);
-      gap: 26px;
-      align-items: stretch;
+    nav a {
+      padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
     }
-    .hero-card {
-      background: linear-gradient(135deg, #10233f 0%, #17375f 58%, #24649c 100%);
-      color: #fff;
-      padding: 34px;
-      border-radius: 26px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      position: relative;
-      min-height: 360px;
-    }
-    .hero-card:after {
-      content: "";
-      position: absolute;
-      right: -80px;
-      bottom: -80px;
-      width: 260px;
-      height: 260px;
-      border: 24px solid rgba(255,255,255,.08);
-      border-radius: 50%;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 12px;
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: 999px;
-      font-size: 13px;
-      color: #dcecff;
-      margin-bottom: 20px;
-    }
-    .hero h1 {
-      margin: 0 0 14px;
-      font-size: clamp(30px, 4vw, 48px);
-      line-height: 1.25;
-      letter-spacing: .03em;
-      color: #ffffff;
-    }
-    .hero p {
-      margin: 0 0 24px;
-      color: #dce7f6;
-      font-size: 16px;
-      max-width: 620px;
-    }
-    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .hero-divider { height: 1px; background: rgba(255,255,255,.2); margin: 22px 0 14px; }
-    .hero-nav-label { font-size: 11px; color: rgba(255,255,255,.5); letter-spacing: .08em; margin-bottom: 10px; }
-    .hero-type-nav { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
-    .hero-nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.22);
-      border-radius: 12px; padding: 10px 16px; min-width: 108px;
-      font-size: 13px; font-weight: 700; color: #fff;
-      transition: background .15s; text-align: center;
-    }
-    .hero-nav-item:hover { background: rgba(255,255,255,.24); }
-    .hero-nav-item small { font-size: 11px; color: rgba(255,255,255,.6); font-weight: 400; }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 11px 18px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .btn-primary { background: #fff; color: var(--navy); }
-    .btn-secondary { border: 1px solid rgba(255,255,255,.36); color: #fff; }
-    .market-board, .desktop-brief {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 26px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-    .desktop-brief {
-      display: grid;
-      gap: 14px;
-      align-content: start;
-      background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
-    }
-    .desktop-brief h2 { margin: 0; color: var(--navy); font-size: 20px; }
-    .brief-card {
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 16px;
-      padding: 14px;
-    }
-    .brief-card b { display:block; color:var(--navy); margin-bottom:4px; }
-    .brief-card span { color:var(--muted); font-size:13px; line-height:1.6; }
-    .market-board h2 { margin: 0 0 14px; color: var(--navy); font-size: 20px; }
-    .mini-date { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-    .market-list { display: grid; gap: 10px; }
-    .market-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-      border-bottom: 1px dashed var(--border);
-      padding-bottom: 9px;
-    }
-    .market-row:last-child { border-bottom: none; }
-　　.label { color: var(--muted); font-size: 13px; }
-　　.label small { color: var(--muted); font-size: 11px; }
-　　.value { font-weight: 800; color: var(--navy); }
-    .plus { color: var(--green); }
-    .minus { color: var(--red); }
-    .wrap {
-      width: 100%;
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 28px;
-    }
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 16px 0 14px;
-    }
-    .section-title h2 { margin: 0; font-size: 23px; color: var(--navy); letter-spacing: .02em; }
-    .section-title small { color: var(--muted); }
-    .latest-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 16px;
-    }
-    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .badge {
-      background: var(--blue);
-      color: var(--navy-2);
-      border: 1px solid #d5e5f8;
-      border-radius: 999px;
-      padding: 3px 10px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .latest-card h3 { margin: 0; font-size: 26px; line-height: 1.45; color: var(--navy); }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-    }
-    .summary-item {
-      background: var(--blue-2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-    }
-    .summary-item .label { display: block; margin-bottom: 2px; }
-    .summary-item strong { font-size: 17px; color: var(--navy); }
-    .article-list { display: grid; gap: 14px; margin-top: 14px; }
-    .article-item {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      display: grid;
-      gap: 6px;
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .article-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-    .article-meta { color: var(--muted); font-size: 13px; }
-    .article-item h3 { margin: 0; color: var(--navy); font-size: 18px; }
-    .article-item p { margin: 0; color: #4b5563; font-size: 14px; }
-    .note-box {
-      background: var(--yellow);
-      border: 1px solid #f1df98;
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      margin-top: 20px;
-    }
-    .note-box h3 { margin: 0 0 6px; color: #6b4e00; }
-    .note-box p { margin: 0; font-size: 14px; color: #604b12; }
-    /* 種別バッジ */
-    .badge-nikkei {
-      background: #eaf2fb;
-      color: #17375f;
-      border: 1px solid #c5d9f0;
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-deep {
-      background: #10233f;
-      color: #dce7f6;
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-memo {
-      background: #f3f0ff;
-      color: #4c1d95;
-      border: 1px solid #ddd6fe;
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-weekly {
-      background: #fff7ed;
-      color: #92400e;
-      border: 1px solid #fed7aa;
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    /* 種別ナビ */
-    .type-nav {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-    .type-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 20px;
-      background: #fff;
-      min-width: 120px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--navy);
-      transition: box-shadow .15s;
-      text-align: center;
-    }
-    .type-nav-item:hover { box-shadow: var(--shadow); }
-    .type-nav-item small { font-size: 11px; color: var(--muted); font-weight: 400; }
-    aside { display: grid; gap: 18px; align-content: start; }
-    .side-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: 0 10px 28px rgba(16,35,63,.05);
-    }
-    .side-card h3 { margin: 0 0 12px; color: var(--navy); font-size: 17px; }
-    .category-list { display: grid; gap: 8px; }
-    .category-list a {
-      display: flex;
-      justify-content: space-between;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #fbfdff;
-      font-size: 14px;
-      font-weight: 700;
-      color: #374151;
-    }
-    .profile { display: flex; gap: 12px; align-items: center; }
-    .avatar {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #dcecff, #b8d7ff);
-      display: grid;
-      place-items: center;
-      font-weight: 900;
-      color: var(--navy);
-    }
-    .profile p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
-    .footer {
-      margin-top: 48px;
-      background: var(--navy);
-      color: #dce7f6;
-      padding: 34px 20px;
-    }
-    .footer-inner {
-      max-width: 1440px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      flex-wrap: wrap;
-      font-size: 13px;
-    }
-    /* ハンバーガーボタン */
+    nav a:hover { color: var(--navy); border-bottom-color: var(--navy); }
+
+    /* ハンバーガー */
     .hamburger {
       display: none;
       flex-direction: column;
@@ -464,18 +222,16 @@ posts.forEach(post => {
       height: 2px;
       background: var(--navy);
       border-radius: 2px;
-      transition: transform 0.25s, opacity 0.25s;
+      transition: transform .25s, opacity .25s;
     }
     .hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
     .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
     .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-    /* モバイルナビ */
     .mobile-nav {
       display: none;
       flex-direction: column;
       background: #fff;
-      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       padding: 8px 0 16px;
     }
     .mobile-nav a {
@@ -484,33 +240,192 @@ posts.forEach(post => {
       font-size: 15px;
       font-weight: 600;
       color: #374151;
-      text-decoration: none;
       border-bottom: 1px solid #f3f6fa;
     }
-    .mobile-nav a:hover { background: #f7fbff; color: var(--navy); }
     .mobile-nav.open { display: flex; }
 
-    @media (max-width: 1180px) {
-      .hero { grid-template-columns: 1.3fr .7fr; }
-      .desktop-brief { display: none; }
+    /* ===== ティッカー帯 ===== */
+    .ticker {
+      background: var(--navy);
+      color: #fff;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    @media (max-width: 860px) {
-      nav { display: none; }
-      .hamburger { display: flex; }
-      header { background: rgba(16, 35, 63, 0.97); border-bottom-color: rgba(255,255,255,.12); }
-      .brand { color: #ffffff; }
-      .hamburger span { background: #ffffff; }
-      .hero { grid-template-columns: 1fr; padding-top: 26px; }
-      .hero-card { min-height: auto; padding: 28px 24px; }
-      .wrap { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .ticker-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: stretch;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
+    .t-date {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px 20px 10px 0;
+      border-right: 1px solid rgba(255,255,255,.16);
+      flex-shrink: 0;
+    }
+    .t-date .d { font-size: 14px; font-weight: 700; letter-spacing: .03em; }
+    .t-date .s { font-size: 10px; color: #93b2d8; letter-spacing: .1em; }
+    .t-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px 20px;
+      border-right: 1px solid rgba(255,255,255,.10);
+      flex-shrink: 0;
+    }
+    .t-item .l { font-size: 10px; color: #93b2d8; letter-spacing: .06em; }
+    .t-item .v { font-size: 14.5px; font-weight: 700; }
+
+    /* ===== 本体 ===== */
+    .shell {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 36px 24px 56px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 40px;
+    }
+
+    /* リード記事 */
+    .lead-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .lead-tag {
+      background: var(--navy);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 11px;
+      letter-spacing: .06em;
+      border-radius: 3px;
+    }
+    .lead-date { font-size: 12.5px; color: var(--muted); letter-spacing: .03em; }
+    .lead-title {
+      font-family: var(--serif);
+      font-size: clamp(23px, 3.2vw, 30px);
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: .01em;
+      color: var(--text);
+      margin: 0 0 14px;
+      text-wrap: balance;
+    }
+    .lead-title a:hover { color: var(--navy-2); }
+    .lead-summary {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.9;
+      margin: 0 0 20px;
+      max-width: 40em;
+    }
+    .statline {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 2px;
+      margin-bottom: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+    .statline .k { font-size: 12px; color: var(--muted); }
+    .statline .v { font-size: 27px; font-weight: 700; color: var(--text); letter-spacing: .01em; line-height: 1.2; }
+    .statline .s { font-size: 12px; color: var(--muted); }
+    .lead-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-p {
+      display: inline-flex;
+      align-items: center;
+      background: var(--navy);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 4px;
+      transition: background .15s;
+    }
+    .btn-p:hover { background: #1d3a63; }
+    .btn-g {
+      display: inline-flex;
+      align-items: center;
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border: 1px solid var(--navy);
+      border-radius: 4px;
+      transition: background .15s;
+    }
+    .btn-g:hover { background: var(--blue); }
+
+    /* ノートの索引 */
+    .index-sec { margin-top: 44px; }
+    .index-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--navy);
+      padding-bottom: 8px;
+    }
+    .index-head h2 {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      margin: 0;
+      color: var(--text);
+    }
+    .index-head a { font-size: 12px; color: var(--muted); }
+    .index-head a:hover { color: var(--navy); }
+    .idx-row {
+      display: grid;
+      grid-template-columns: 72px 92px 1fr;
+      gap: 14px;
+      align-items: baseline;
+      padding: 14px 2px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .idx-row:hover { background: #f0f5fa; }
+    .idx-d { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+    .idx-b {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 3px;
+      justify-self: start;
+      white-space: nowrap;
+    }
+    .b-nk { color: var(--navy); background: #e8eef6; }
+    .b-dp { color: #5b3a0e; background: #f6efe0; }
+    .b-wk { color: #0d5c48; background: #e2f2ec; }
+    .b-mm { color: #4c1d95; background: #efeafb; }
+    .b-gl { color: #334155; background: #eceff3; }
+    .idx-t { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.65; }
+    .idx-more {
+      display: block;
+      text-align: right;
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 12px 2px 0;
+    }
+    .idx-more:hover { color: var(--navy); }
+
     /* 用語解説バナー */
     .glossary-banner {
-      background: linear-gradient(135deg, #10233f 0%, #1e4a7a 100%);
-      border-radius: var(--radius);
+      background: var(--navy);
+      border-radius: 10px;
       padding: 28px 30px;
-      margin: 28px 0 0;
+      margin: 36px 0 0;
       display: flex;
       gap: 32px;
       align-items: center;
@@ -518,19 +433,16 @@ posts.forEach(post => {
     .glossary-banner-left { flex: 1; min-width: 0; }
     .glossary-eyebrow {
       display: inline-block;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: .1em;
-      color: #7dd3fc;
-      background: rgba(125,211,252,.12);
-      border: 1px solid rgba(125,211,252,.3);
-      border-radius: 999px;
-      padding: 3px 12px;
-      margin-bottom: 12px;
+      letter-spacing: .12em;
+      color: #93b2d8;
+      margin-bottom: 10px;
     }
     .glossary-banner-title {
+      font-family: var(--serif);
       font-size: 20px;
-      font-weight: 800;
+      font-weight: 700;
       color: #fff;
       margin: 0 0 8px;
       line-height: 1.4;
@@ -549,7 +461,7 @@ posts.forEach(post => {
       color: var(--navy);
       font-weight: 700;
       font-size: 13px;
-      border-radius: 999px;
+      border-radius: 4px;
       padding: 9px 22px;
       transition: opacity .15s;
     }
@@ -559,7 +471,7 @@ posts.forEach(post => {
       flex-direction: column;
       gap: 8px;
       flex-shrink: 0;
-      width: 220px;
+      width: 230px;
     }
     .glossary-term-label {
       font-size: 11px;
@@ -573,50 +485,167 @@ posts.forEach(post => {
       align-items: center;
       gap: 8px;
       color: #dce7f6;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       padding: 9px 14px;
       background: rgba(255,255,255,.07);
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid rgba(255,255,255,.1);
       transition: background .15s;
     }
     .glossary-term-item:hover { background: rgba(255,255,255,.14); }
-    .glossary-term-item::before {
-      content: '→';
-      font-size: 12px;
-      color: #60a5fa;
-      flex-shrink: 0;
+    .glossary-term-item::before { content: '→'; font-size: 12px; color: #7fa8d8; flex-shrink: 0; }
+    .glossary-term-more { font-size: 12px; color: #93b2d8; padding: 4px 14px; font-weight: 600; }
+
+    /* 立ち位置 */
+    .note-box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--navy);
+      border-radius: 0 8px 8px 0;
+      padding: 18px 20px;
+      margin-top: 24px;
     }
-    .glossary-term-more {
+    .note-box h3 {
+      margin: 0 0 6px;
+      color: var(--navy);
+      font-family: var(--serif);
+      font-size: 15px;
+    }
+    .note-box p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+    /* ===== 右レール ===== */
+    aside { display: grid; gap: 20px; align-content: start; }
+    .side-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 18px 14px;
+    }
+    .side-card h3 {
+      margin: 0 0 4px;
+      color: var(--text);
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mkt { display: grid; }
+    .mkt .r {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+    .mkt .r:last-child { border-bottom: none; }
+    .mkt .l { font-size: 12px; color: var(--muted); }
+    .mkt .v { font-size: 13.5px; font-weight: 700; color: var(--navy); }
+    .mkt-note { font-size: 10.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
+
+    .cp-card b { display: block; color: var(--navy); font-size: 12.5px; margin: 10px 0 2px; }
+    .cp-card span { color: var(--muted); font-size: 12px; line-height: 1.7; display: block; }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 10px; }
+    .pill {
       font-size: 12px;
-      color: #7dd3fc;
-      padding: 4px 14px;
+      color: var(--navy);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 12px;
+      background: #f7f9fb;
+      transition: background .15s;
+    }
+    .pill:hover { background: var(--blue); }
+    .rail-link { font-size: 12px; color: var(--muted); padding-top: 10px; display: block; }
+    .rail-link:hover { color: var(--navy); }
+
+    .category-list { display: grid; gap: 7px; padding-top: 10px; }
+    .category-list a {
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      background: #fbfdff;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      transition: background .15s;
+    }
+    .category-list a:hover { background: var(--blue-2); }
+    .category-list .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .theme-row { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 10px; }
+    .theme-badge {
+      background: var(--blue-2);
+      color: var(--navy-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 11px;
+      font-size: 11.5px;
       font-weight: 600;
     }
-    @media (max-width: 860px) {
-      .glossary-banner { flex-direction: column; gap: 20px; }
-      .glossary-banner-right { width: 100%; }
+    .profile { display: flex; gap: 12px; align-items: center; padding-top: 10px; }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--blue);
+      display: grid;
+      place-items: center;
+      font-family: var(--serif);
+      font-weight: 700;
+      color: var(--navy);
+      flex-shrink: 0;
     }
+    .profile p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
+    .side-note { font-size: 12px; color: var(--muted); margin: 0; padding-top: 10px; line-height: 1.7; }
 
-    @media (max-width: 520px) {
-      .topbar { font-size: 12px; }
+    /* フッター */
+    .footer {
+      background: var(--navy);
+      color: #dce7f6;
+      padding: 30px 24px;
+    }
+    .footer-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .footer-inner a { color: #9ec4e8; }
+
+    /* ===== レスポンシブ ===== */
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; gap: 32px; }
+    }
+    @media (max-width: 860px) {
+      nav { display: none; }
+      .hamburger { display: flex; }
+      .shell { padding: 24px 16px 44px; }
+      .ticker-inner { padding: 0 16px; }
       .header-inner { padding: 12px 16px; }
-      .brand { font-size: 15px; }
-      .brand-icon { width: 36px; height: 36px; font-size: 19px; }
-      .hero, .wrap { padding-left: 14px; padding-right: 14px; }
-      .hero-card { border-radius: 20px; }
-      .latest-card h3 { font-size: 21px; }
-      .summary-grid { grid-template-columns: 1fr; }
+      .glossary-banner { flex-direction: column; gap: 20px; padding: 24px 20px; }
+      .glossary-banner-right { width: 100%; }
+      .statline .v { font-size: 23px; }
+      .idx-row { grid-template-columns: 64px 1fr; }
+      .idx-b { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">毎日の日本株市場を、むずかしすぎず・軽すぎず整理する相場ノート</div>
   <header>
     <div class="header-inner">
       <a class="brand" href="/">
-        <span class="brand-icon">▧</span>
+        <span class="brand-icon">株</span>
         <span>今日の日本株ノート</span>
       </a>
       <nav>
@@ -631,149 +660,104 @@ posts.forEach(post => {
         <span></span><span></span><span></span>
       </button>
     </div>
+    <div class="mobile-nav" id="mobile-nav">
+      <a href="/blog">今日の相場</a>
+      <a href="/blog/category/deep">深掘りノート</a>
+      <a href="/blog/category/nikkei">日経ノート</a>
+      <a href="/blog/category/memo">投資メモ</a>
+      <a href="/blog/category/glossary/">用語解説</a>
+      <a href="/about">このサイトについて</a>
+    </div>
   </header>
 
-  <div class="mobile-nav" id="mobile-nav">
-    <a href="/blog">今日の相場</a>
-    <a href="/blog/category/deep">深掘りノート</a>
-    <a href="/blog/category/nikkei">日経ノート</a>
-    <a href="/blog/category/memo">投資メモ</a>
-    <a href="/blog/category/glossary/">用語解説</a>
-    <a href="/about">このサイトについて</a>
-  </div>
-
-  <section class="hero">
-    <div class="hero-card">
-      <div class="eyebrow">最新マーケットメモ</div>
-      <h1>日本株の一日を、<br>やさしく整理する。</h1>
-      <p>日経平均、TOPIX、為替、米国市場、セクター動向を中心に、今日の相場と明日の注目点をノート形式でまとめます。</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#latest">最新記事を読む</a>
-        <a class="btn btn-secondary" href="/about">このサイトについて</a>
-      </div>
-      <div class="hero-divider"></div>
-      <div class="hero-nav-label">記事を探す</div>
-      <div class="hero-type-nav">
-        <a class="hero-nav-item" href="/blog/category/nikkei">
-          <span>日経ノート</span>
-          <small>3分で読む・毎日更新</small>
-        </a>
-        <a class="hero-nav-item" href="/blog/category/deep">
-          <span>深掘りノート</span>
-          <small>詳しく知りたい方へ</small>
-        </a>
-        <a class="hero-nav-item" href="/blog/category/memo">
-          <span>投資メモ</span>
-          <small>注目テーマを整理</small>
-        </a>
-        <a class="hero-nav-item" href="/blog/category/glossary/">
-          <span>用語解説</span>
-          <small>投資用語をひく</small>
-        </a>
-        <a class="hero-nav-item" href="/blog">
-          <span>すべての記事</span>
-          <small>一覧を見る</small>
-        </a>
-      </div>
-    </div>
-<div class="market-board">
-      <h2>相場サマリー</h2>
-      <div class="mini-date">最新記事投稿時の直近終値</div>
-      <div class="market-list">
-        <div class="market-row">
-          <span class="label">日経平均<br><small>{latestNikkeiNote?.data.nikkeiDate}終値</small></span>
-          <span class="value plus">{latestNikkeiNote?.data.nikkei}</span>
+  {md && (
+    <div class="ticker" aria-label="主要指標（最新記事時点）">
+      <div class="ticker-inner">
+        <div class="t-date">
+          <span class="d">{jpDate(md.nikkeiDate)}</span>
+          <span class="s">大引け時点</span>
         </div>
-        <div class="market-row">
-          <span class="label">TOPIX<br><small>{latestNikkeiNote?.data.topixDate}終値</small></span>
-          <span class="value plus">{latestNikkeiNote?.data.topix}</span>
-        </div>
-        <div class="market-row">
-          <span class="label">ドル円<br><small>{latestNikkeiNote?.data.usdDate}15時30分</small></span>
-          <span class="value">{latestNikkeiNote?.data.usd}</span>
-        </div>
-        <div class="market-row">
-          <span class="label">NYダウ<br><small>{latestNikkeiNote?.data.dowDate}終値</small></span>
-          <span class="value plus">{latestNikkeiNote?.data.dow}</span>
-        </div>
-        <div class="market-row">
-          <span class="label">NASDAQ<br><small>{latestNikkeiNote?.data.nasdaqDate}終値</small></span>
-          <span class="value plus">{latestNikkeiNote?.data.nasdaq}</span>
-        </div>
-      </div>
-    </div>
-    <div class="desktop-brief">
-      <h2>朝のチェックポイント</h2>
-      {checkPoints.map((cp, i) => (
-        <div class="brief-card"><b>{i + 1}. {cp.title}</b><span>{cp.text}</span></div>
-      ))}
-    </div>
-  </section>
-
-  <main class="wrap">
-    <section>
-
-      <div class="section-title" id="latest">
-        <h2>最新の日本株ノート</h2>
-        <small>Daily Market Note</small>
-      </div>
-
-      {latestPost && (
-        <article class="latest-card">
-          <div class="badge-row">
-            <span class={
-              latestPost.data.category === 'nikkei' ? 'badge-nikkei' :
-              latestPost.data.category === 'deep' ? 'badge-deep' :
-              latestPost.data.category === 'memo' ? 'badge-memo' :
-              'badge'
-            }>{
-              latestPost.data.category === 'nikkei' ? '3分 | 日経ノート' :
-              latestPost.data.category === 'deep' ? '詳しく | 深掘りノート' :
-              latestPost.data.category === 'memo' ? '投資メモ' :
-              latestPost.data.category === 'glossary' ? '用語解説' :
-              latestPost.data.category || '記事'
-            }</span>
-            <span style="font-size:13px;color:var(--muted);">
-              {latestPost.data.pubDate.getFullYear()}年{latestPost.data.pubDate.getMonth() + 1}月{latestPost.data.pubDate.getDate()}日
-            </span>
+        {md.nikkei && (
+          <div class="t-item">
+            <span class="l">日経平均</span>
+            <span class="v">{fmtNum(md.nikkei)}</span>
           </div>
-          <h3>{latestPost.data.title}</h3>
-          <p>{latestPost.data.description}</p>
-          <a class="btn btn-primary" style="width:max-content;background:var(--navy);color:#fff;" href={`/blog/${latestPost.id}/`}>記事を読む</a>
-        </article>
+        )}
+        {md.topix && (
+          <div class="t-item">
+            <span class="l">TOPIX</span>
+            <span class="v">{fmtNum(md.topix)}</span>
+          </div>
+        )}
+        {md.usd && (
+          <div class="t-item">
+            <span class="l">ドル円（15時30分）</span>
+            <span class="v">{fmtNum(md.usd)}</span>
+          </div>
+        )}
+        {md.dow && (
+          <div class="t-item">
+            <span class="l">NYダウ（{fmtD(md.dowDate)}）</span>
+            <span class="v">{fmtNum(md.dow)}</span>
+          </div>
+        )}
+        {md.nasdaq && (
+          <div class="t-item">
+            <span class="l">NASDAQ（{fmtD(md.nasdaqDate)}）</span>
+            <span class="v">{fmtNum(md.nasdaq)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+
+  <div class="shell">
+    <main>
+      {latestPost && (
+        <section aria-label="今日のノート">
+          <div class="lead-eyebrow">
+            {leadBadge && <span class="lead-tag">{leadBadge.label}</span>}
+            <span class="lead-date">{leadDate}</span>
+          </div>
+          <h1 class="lead-title">
+            <a href={`/blog/${latestPost.id}/`}>{stripTitle(latestPost.data.title, latestPost.data.category)}</a>
+          </h1>
+          <p class="lead-summary">{latestPost.data.description}</p>
+          {md?.nikkei && (
+            <div class="statline">
+              <span class="k">日経平均 終値</span>
+              <span class="v">{fmtNum(md.nikkei)}</span>
+              <span class="s">{fmtD(md.nikkeiDate)} 大引け</span>
+            </div>
+          )}
+          <div class="lead-btns">
+            <a class="btn-p" href={`/blog/${latestPost.id}/`}>このノートを読む</a>
+            {leadCompanionDeep ? (
+              <a class="btn-g" href={`/blog/${leadCompanionDeep.id}/`}>深掘り版（詳しく）</a>
+            ) : (
+              <a class="btn-g" href="/blog">記事一覧を見る</a>
+            )}
+          </div>
+        </section>
       )}
 
-      <div class="section-title">
-        <h2>記事一覧</h2>
-        <small>Recent Posts</small>
-      </div>
-      <div class="article-list">
-        {recentPosts.map(post => (
-          <a class="article-item" href={`/blog/${post.id}/`}>
-            <div class="article-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span class={
-                post.data.category === 'nikkei' ? 'badge-nikkei' :
-                post.data.category === 'deep' ? 'badge-deep' :
-                post.data.category === 'memo' ? 'badge-memo' :
-                post.data.category === 'weekly' ? 'badge-weekly' :
-                'badge'
-              }>{
-                post.data.category === 'nikkei' ? '3分 | 日経ノート' :
-                post.data.category === 'deep' ? '詳しく | 深掘りノート' :
-                post.data.category === 'memo' ? '投資メモ' :
-                post.data.category === 'weekly' ? '週次振り返り' :
-                post.data.category === 'glossary' ? '用語解説' :
-                post.data.category || '記事'
-              }</span>
-              <span style="font-size:12px;color:var(--muted);">
-                {post.data.pubDate.getFullYear()}年{post.data.pubDate.getMonth() + 1}月{post.data.pubDate.getDate()}日
-              </span>
-            </div>
-            <h3>{post.data.title}</h3>
-            <p>{post.data.description}</p>
-          </a>
-        ))}
-      </div>
+      <section class="index-sec" id="latest" aria-label="最近のノート">
+        <div class="index-head">
+          <h2>ノートの索引</h2>
+          <a href="/blog">すべての記事 →</a>
+        </div>
+        {recentPosts.map(post => {
+          const b = catBadge[post.data.category ?? ''] ?? { label: '記事', cls: 'b-gl' };
+          return (
+            <a class="idx-row" href={`/blog/${post.id}/`}>
+              <span class="idx-d">{rowDate(post.data.pubDate)}</span>
+              <span class={`idx-b ${b.cls}`}>{b.label}</span>
+              <span class="idx-t">{stripTitle(post.data.title, post.data.category)}</span>
+            </a>
+          );
+        })}
+        <a class="idx-more" href="/blog">記事一覧・カレンダーで探す →</a>
+      </section>
 
       <!-- 用語解説バナー -->
       <div class="glossary-banner">
@@ -805,29 +789,65 @@ posts.forEach(post => {
         <h3>このサイトの立ち位置</h3>
         <p>短期売買をあおるサイトではなく、相場の流れを毎日整理し、翌営業日の見方を準備するための"相場ノート"です。</p>
       </div>
-    </section>
+    </main>
 
     <aside>
+      {md && (
+        <div class="side-card">
+          <h3>相場サマリー</h3>
+          <div class="mkt">
+            {md.nikkei && <div class="r"><span class="l">日経平均</span><span class="v">{fmtNum(md.nikkei)}</span></div>}
+            {md.topix && <div class="r"><span class="l">TOPIX</span><span class="v">{fmtNum(md.topix)}</span></div>}
+            {md.usd && <div class="r"><span class="l">ドル円</span><span class="v">{fmtNum(md.usd)}</span></div>}
+            {md.dow && <div class="r"><span class="l">NYダウ</span><span class="v">{fmtNum(md.dow)}</span></div>}
+            {md.nasdaq && <div class="r"><span class="l">NASDAQ</span><span class="v">{fmtNum(md.nasdaq)}</span></div>}
+          </div>
+          <p class="mkt-note">{fmtD(md.nikkeiDate)} 大引け／米国は{fmtD(md.dowDate)}終値／ドル円は15時30分時点</p>
+        </div>
+      )}
+
+      <div class="side-card cp-card">
+        <h3>朝のチェックポイント</h3>
+        {checkPoints.map((cp, i) => (
+          <div><b>{i + 1}. {cp.title}</b><span>{cp.text}</span></div>
+        ))}
+      </div>
+
+      <div class="side-card">
+        <h3>用語をひく</h3>
+        <div class="pills">
+          {latestGlossary.map(p => (
+            <a class="pill" href={`/blog/${p.id}/`}>
+              {p.data.title.replace(/とは.*/, '').replace(/？.*/, '')}
+            </a>
+          ))}
+        </div>
+        <a class="rail-link" href="/blog/category/glossary/">用語解説 全{glossaryCount}語 →</a>
+      </div>
+
       <CalendarWidget />
+
       <div class="side-card">
         <h3>カテゴリー</h3>
         <div class="category-list">
           {Object.entries(categoryCounts).map(([, info]) => (
             <a href={info.href}>
               <span>{info.label}</span>
-              <span>{info.count}</span>
+              <span class="cnt">{info.count}</span>
             </a>
           ))}
         </div>
       </div>
+
       <div class="side-card">
         <h3>今週の注目テーマ</h3>
-        <div class="badge-row">
+        <div class="theme-row">
           {weeklyThemes.map(theme => (
-            <span class="badge">{theme}</span>
+            <span class="theme-badge">{theme}</span>
           ))}
         </div>
       </div>
+
       <div class="side-card">
         <h3>運営者メモ</h3>
         <div class="profile">
@@ -835,12 +855,13 @@ posts.forEach(post => {
           <p>日本株市場の動きを、日々の投資判断の前提整理として読みやすくまとめます。</p>
         </div>
       </div>
+
       <div class="side-card">
         <h3>免責事項</h3>
-        <p style="font-size:13px;color:var(--muted);margin:0;">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
+        <p class="side-note">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
       </div>
     </aside>
-  </main>
+  </div>
 
   <footer class="footer">
     <div class="footer-inner">
