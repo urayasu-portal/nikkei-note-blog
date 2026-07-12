@@ -751,7 +751,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
           </div>
 
           <!-- 相場チップ列（指標データがある記事のみ） -->
-          {(nikkei || topix || usd) && (
+          {(nikkei || topix || usd || dow || nasdaq) && (
             <div class="market-chips">
               {nikkei && (
                 <div class="mchip">
@@ -769,6 +769,18 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
                 <div class="mchip">
                   <span class="mchip-l">ドル円</span>
                   <span class="mchip-v">{fmtNum(usd)}</span>
+                </div>
+              )}
+              {dow && (
+                <div class="mchip">
+                  <span class="mchip-l">NYダウ</span>
+                  <span class="mchip-v">{fmtNum(dow)}</span>
+                </div>
+              )}
+              {nasdaq && (
+                <div class="mchip">
+                  <span class="mchip-l">NASDAQ</span>
+                  <span class="mchip-v">{fmtNum(nasdaq)}</span>
                 </div>
               )}
             </div>
@@ -847,7 +859,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
                 <h3>用語解説を確認する</h3>
                 <div class="glossary-links">
                   {glossaryPosts.map(post => (
-                    <a class="glossary-link" href={`/blog/${post.id}/`}>{post.data.title}</a>
+                    <a class="glossary-link" href={`/blog/${post.id}/`}>{post.data.title.replace(/とは.*/, '').replace(/？.*/, '')}</a>
                   ))}
                 </div>
               </div>
@@ -880,9 +892,9 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
       <!-- サイドバー -->
       <aside>
 
-        <!-- 相場サマリー（日経ノートのみ表示） -->
+        <!-- 相場サマリー（日経ノートのみ表示。モバイルは冒頭チップと重複するため非表示） -->
         {category === 'nikkei' && nikkei && (
-          <div class="side-card">
+          <div class="side-card side-hide-mobile">
             <h3>この日の相場サマリー</h3>
             <div class="market-list">
               {nikkei && (

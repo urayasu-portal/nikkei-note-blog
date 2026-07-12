@@ -15,9 +15,30 @@ const glossaryPosts  = posts.filter(p => p.data.category === 'glossary');
 const glossaryCount  = glossaryPosts.length;
 const latestGlossary = glossaryPosts.slice(0, 3);
 
-// 最新の日経ノートを取得（相場データの供給元）
-const latestNikkeiNote = posts.find(post => post.data.category === 'nikkei');
+// 最新＋前日の日経ノートを取得（相場データと前日比の供給元）
+const nikkeiNotes = posts.filter(post => post.data.category === 'nikkei');
+const latestNikkeiNote = nikkeiNotes[0];
 const md = latestNikkeiNote?.data;
+const mdPrev = nikkeiNotes[1]?.data;
+
+// 前日比（cur/prev 文字列 → {cls, text}）。連続する日経ノートの終値差から算出。
+const chg = (cur?: string, prev?: string) => {
+  if (!cur || !prev) return null;
+  const cs = cur.replace(/,/g, ''), ps = prev.replace(/,/g, '');
+  const c = Number(cs), p = Number(ps);
+  if (!isFinite(c) || !isFinite(p)) return null;
+  const dec = cs.split('.')[1]?.length ?? 0;
+  const f = Math.pow(10, dec);
+  const diff = Math.round((c - p) * f) / f;
+  if (diff === 0) return { cls: 'flat', text: '±0' };
+  const abs = Math.abs(diff).toLocaleString('ja-JP', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  return { cls: diff > 0 ? 'up' : 'down', text: `${diff > 0 ? '+' : '−'}${abs}` };
+};
+const chNikkei = chg(md?.nikkei, mdPrev?.nikkei);
+const chTopix  = chg(md?.topix,  mdPrev?.topix);
+const chUsd    = chg(md?.usd,    mdPrev?.usd);
+const chDow    = chg(md?.dow,    mdPrev?.dow);
+const chNasdaq = chg(md?.nasdaq, mdPrev?.nasdaq);
 
 // weeklyThemes / checkPoints を持つ最新記事から取得（なければデフォルト値）
 const latestWithThemes = posts.find(p => p.data.weeklyThemes && p.data.weeklyThemes.length > 0);
@@ -287,6 +308,10 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
     }
     .t-item .l { font-size: 10px; color: #93b2d8; letter-spacing: .06em; }
     .t-item .v { font-size: 14.5px; font-weight: 700; }
+    .t-chg { font-size: 11px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+    .t-chg.up   { color: #4ade80; }
+    .t-chg.down { color: #fb923c; }
+    .t-chg.flat { color: #93b2d8; }
 
     /* ===== 本体 ===== */
     .shell {
@@ -714,30 +739,35 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
           <div class="t-item">
             <span class="l">日経平均</span>
             <span class="v">{fmtNum(md.nikkei)}</span>
+            {chNikkei && <span class={`t-chg ${chNikkei.cls}`}>{chNikkei.text}</span>}
           </div>
         )}
         {md.topix && (
           <div class="t-item">
             <span class="l">TOPIX</span>
             <span class="v">{fmtNum(md.topix)}</span>
+            {chTopix && <span class={`t-chg ${chTopix.cls}`}>{chTopix.text}</span>}
           </div>
         )}
         {md.usd && (
           <div class="t-item">
             <span class="l">ドル円（15時30分）</span>
             <span class="v">{fmtNum(md.usd)}</span>
+            {chUsd && <span class={`t-chg ${chUsd.cls}`}>{chUsd.text}</span>}
           </div>
         )}
         {md.dow && (
           <div class="t-item">
             <span class="l">NYダウ（{shortMD(md.dowDate)}終値）</span>
             <span class="v">{fmtNum(md.dow)}</span>
+            {chDow && <span class={`t-chg ${chDow.cls}`}>{chDow.text}</span>}
           </div>
         )}
         {md.nasdaq && (
           <div class="t-item">
             <span class="l">NASDAQ（{shortMD(md.nasdaqDate)}終値）</span>
             <span class="v">{fmtNum(md.nasdaq)}</span>
+            {chNasdaq && <span class={`t-chg ${chNasdaq.cls}`}>{chNasdaq.text}</span>}
           </div>
         )}
       </div>
