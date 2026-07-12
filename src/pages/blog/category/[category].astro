@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../../../components/BaseHead.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import { SITE_TITLE } from '../../../consts';
 import { getCollection } from 'astro:content';
@@ -249,16 +250,7 @@ const label = category ? (categoryLabel[category] ?? category) : '記事';
       </div>
     </div>
 
-    <footer>
-      <div class="footer-inner">
-        <div>© 今日の日本株ノート</div>
-        <div>
-          <a href="/about">このサイトについて</a>｜
-          <a href="/privacy">プライバシーポリシー</a>｜
-          <a href="/contact">お問い合わせ</a>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
 
   </body>
 </html>

@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import AffiliateCTA from '../components/AffiliateCTA.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
 type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
 
@@ -972,17 +973,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
       </aside>
     </div>
 
-    <footer>
-      <div class="footer-inner">
-        <div>© 今日の日本株ノート</div>
-        <div>
-          <a href="/about">このサイトについて</a>｜
-          <a href="/privacy">プライバシーポリシー</a>｜
-          <a href="/contact">お問い合わせ</a>
-        </div>
-      </div>
-      <p class="footer-disclaimer">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
-    </footer>
+    <SiteFooter />
 
   </body>
 </html>

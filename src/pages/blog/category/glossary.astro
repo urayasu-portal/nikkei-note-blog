@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseHead from '../../../components/BaseHead.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import { SITE_TITLE } from '../../../consts';
 import '../../../styles/glossary.css';
@@ -337,16 +338,7 @@ const picks = [
 
     </div><!-- /gi-main -->
 
-    <footer class="g-footer">
-      <div class="g-footer-inner">
-        <div>© 今日の日本株ノート</div>
-        <div>
-          <a href="/about">このサイトについて</a>｜
-          <a href="/privacy">プライバシーポリシー</a>｜
-          <a href="/contact">お問い合わせ</a>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
 
     <script>
       (() => {

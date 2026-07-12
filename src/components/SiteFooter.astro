@@ -1,0 +1,49 @@
+---
+// サイト共通フッター（サイトマップ型）。全ページで使用。
+---
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div class="sf-brand">
+      <div class="sf-logo"><span class="sf-mark">株</span> 今日の日本株ノート</div>
+      <p class="sf-tag">日本株市場を、むずかしすぎず・軽すぎず毎日整理する相場ノート。</p>
+    </div>
+    <nav class="sf-cols" aria-label="フッターナビゲーション">
+      <div class="sf-col">
+        <h4>コンテンツ</h4>
+        <a href="/blog/category/nikkei/">日経ノート</a>
+        <a href="/blog/category/deep/">深掘りノート</a>
+        <a href="/blog/category/memo/">投資メモ</a>
+        <a href="/blog/category/weekly/">週次まとめ</a>
+        <a href="/blog/category/glossary/">用語解説</a>
+      </div>
+      <div class="sf-col">
+        <h4>サイト</h4>
+        <a href="/">トップページ</a>
+        <a href="/blog/">記事一覧</a>
+        <a href="/about/">このサイトについて</a>
+        <a href="/privacy/">プライバシーポリシー</a>
+        <a href="/contact/">お問い合わせ</a>
+      </div>
+    </nav>
+  </div>
+  <p class="sf-disclaimer">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
+  <div class="sf-copy">© 今日の日本株ノート</div>
+</footer>
+
+<style>
+  .site-footer { background: #10233f; color: #cddcf0; padding: 40px 20px 28px; }
+  .sf-inner { max-width: 1160px; margin: 0 auto; display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  .sf-logo { font-weight: 700; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .sf-mark { display: inline-grid; place-items: center; width: 26px; height: 26px; background: #fff; color: #10233f; border-radius: 6px; font-size: 13px; font-weight: 800; }
+  .sf-tag { font-size: 12.5px; color: #9ec4e8; margin: 10px 0 0; max-width: 340px; line-height: 1.7; }
+  .sf-cols { display: flex; gap: 48px; flex-wrap: wrap; }
+  .sf-col h4 { font-size: 12px; color: #7f9dc4; letter-spacing: .08em; margin: 0 0 10px; font-weight: 700; }
+  .sf-col a { display: block; font-size: 13px; color: #cddcf0; text-decoration: none; padding: 4px 0; }
+  .sf-col a:hover { color: #fff; text-decoration: underline; }
+  .sf-disclaimer { max-width: 1160px; margin: 28px auto 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.12); font-size: 12px; line-height: 1.7; color: #8fb0d6; }
+  .sf-copy { max-width: 1160px; margin: 14px auto 0; font-size: 12px; color: #8fb0d6; }
+  @media (max-width: 640px) {
+    .sf-inner { flex-direction: column; gap: 24px; }
+    .sf-cols { gap: 32px; }
+  }
+</style>

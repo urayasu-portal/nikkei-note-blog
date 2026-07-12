@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import AffiliateCTA from '../components/AffiliateCTA.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import type { AffiliateCategory } from '../data/affiliates';
 import '../styles/glossary.css';
 
@@ -333,16 +334,7 @@ const affiliateCTA = affiliateBySlug[currentSlug];
       </aside>
     </div>
 
-    <footer class="g-footer">
-      <div class="g-footer-inner">
-        <div>© 今日の日本株ノート</div>
-        <div>
-          <a href="/about">このサイトについて</a>｜
-          <a href="/privacy">プライバシーポリシー</a>｜
-          <a href="/contact">お問い合わせ</a>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
 
     <script>
       // 目次の自動生成

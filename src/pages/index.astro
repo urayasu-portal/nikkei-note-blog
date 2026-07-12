@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import CalendarWidget from '../components/CalendarWidget.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -926,16 +927,7 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
     </aside>
   </div>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div>© 今日の日本株ノート</div>
-      <div>
-        <a href="/about">このサイトについて</a>｜
-        <a href="/privacy">プライバシーポリシー</a>｜
-        <a href="/contact">お問い合わせ</a>
-      </div>
-    </div>
-  </footer>
+  <SiteFooter />
 
   <script>
     const btn = document.querySelector('.hamburger');
