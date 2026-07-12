@@ -22,7 +22,7 @@ const items = affiliates.filter(
     </div>
     {lead && <p class="aff-lead">{lead}</p>}
 
-    <div class="aff-grid">
+    <div class={items.length >= 2 ? 'aff-grid' : 'aff-grid aff-grid-1'}>
       {items.map((a) => (
         <div class="aff-card">
           <div class="aff-card-top">
@@ -90,10 +90,18 @@ const items = affiliates.filter(
     line-height: 1.75;
     margin: 0 0 16px;
   }
+  /*
+    列数は auto-fit ではなく明示指定にする。
+    repeat(auto-fit, minmax()) はグリッド入れ子時に iOS Safari が
+    行の高さを誤計算し、後続要素（サイドバー）が重なるバグを踏むため。
+  */
   .aff .aff-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+  }
+  .aff .aff-grid-1 {
+    grid-template-columns: 1fr;
   }
   .aff .aff-card {
     position: relative;
