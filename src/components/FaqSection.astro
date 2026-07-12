@@ -1,0 +1,30 @@
+---
+// FAQ本文＋FAQPage構造化データ（JSON-LD）を出力する。
+// 見た目は記事本文タイポグラフィ（.article-body の :global スタイル）に任せ、
+// 独自CSSは持たない（本文CSSとの詳細度干渉を避けるため）。
+interface Faq {
+  q: string;
+  a: string;
+}
+interface Props {
+  faqs: Faq[];
+}
+const { faqs } = Astro.props;
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+});
+---
+
+{faqs.map((f) => (
+  <>
+    <h3>Q. {f.q}</h3>
+    <p>{f.a}</p>
+  </>
+))}
+<script is:inline type="application/ld+json" set:html={jsonLd} />

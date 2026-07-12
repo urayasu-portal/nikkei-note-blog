@@ -34,6 +34,7 @@ const categoryLabel =
   category === 'memo' ? '投資メモ' :
   category === 'glossary' ? '用語解説' :
   category === 'weekly' ? '週次振り返り' :
+  category === 'guide' ? '投資ガイド' :
   category || '記事';
 
 const formattedDate = pubDate
@@ -829,6 +830,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
                 category="securities"
                 heading="ネット証券で口座を開くなら"
                 lead="毎日の相場チェックや実際の売買には、使いやすいネット証券口座があると便利です。日本株の取引に定評のある2社を紹介します。"
+                moreHref="/blog/20260712-guide-shoken-erabikata/"
               />
             )}
 
@@ -845,6 +847,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
                         post.data.category === 'memo' ? '投資メモ' :
                         post.data.category === 'glossary' ? '用語解説' :
                         post.data.category === 'weekly' ? '週次振り返り' :
+                        post.data.category === 'guide' ? '投資ガイド' :
                         post.data.category ?? '記事'
                       }</div>
                       <div class="related-title">{post.data.title}</div>

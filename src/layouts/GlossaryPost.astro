@@ -231,7 +231,12 @@ const affiliateCTA = affiliateBySlug[currentSlug];
 
           <!-- アフィリエイトCTA（お金・口座に直結する用語のみ） -->
           {affiliateCTA && (
-            <AffiliateCTA category={affiliateCTA.category} heading={affiliateCTA.heading} />
+            <AffiliateCTA
+              category={affiliateCTA.category}
+              heading={affiliateCTA.heading}
+              moreHref="/blog/20260712-guide-shoken-erabikata/"
+              moreLabel="証券口座の選び方と2社比較を読む"
+            />
           )}
 
           <!-- 今日の相場ノートCTA -->

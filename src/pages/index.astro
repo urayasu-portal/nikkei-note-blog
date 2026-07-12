@@ -59,6 +59,7 @@ const categoryMap: Record<string, { label: string; href: string }> = {
   weekly:   { label: '週次まとめ',   href: '/blog/category/weekly' },
   memo:     { label: '投資メモ',     href: '/blog/category/memo' },
   glossary: { label: '用語解説',     href: '/blog/category/glossary' },
+  guide:    { label: '投資ガイド',   href: '/blog/category/guide' },
 };
 const categoryCounts: Record<string, { label: string; href: string; count: number }> = {};
 posts.forEach(post => {
@@ -114,6 +115,7 @@ const catBadge: Record<string, { label: string; cls: string }> = {
   memo:     { label: '投資メモ',   cls: 'b-mm' },
   weekly:   { label: '週次まとめ', cls: 'b-wk' },
   glossary: { label: '用語解説',   cls: 'b-gl' },
+  guide:    { label: '投資ガイド', cls: 'b-mm' },
 };
 
 const leadDate = latestPost

@@ -15,6 +15,8 @@ const categoryLabel = (cat: string | undefined) => {
     deep: '深掘りノート',
     memo: '投資メモ',
     glossary: '用語解説',
+    weekly: '週次振り返り',
+    guide: '投資ガイド',
   };
   return cat ? (map[cat] ?? cat) : '記事';
 };

@@ -5,9 +5,12 @@ interface Props {
   category: AffiliateCategory | AffiliateCategory[];
   heading?: string;
   lead?: string;
+  /** カードの下に出す関連ガイド記事へのリンク（比較記事など） */
+  moreHref?: string;
+  moreLabel?: string;
 }
 
-const { category, heading = '口座開設を検討するなら', lead } = Astro.props;
+const { category, heading = '口座開設を検討するなら', lead, moreHref, moreLabel = '2社のくわしい比較と選び方を読む' } = Astro.props;
 const cats = Array.isArray(category) ? category : [category];
 const items = affiliates.filter(
   (a) => a.status === 'approved' && cats.includes(a.category)
@@ -46,6 +49,10 @@ const items = affiliates.filter(
         </div>
       ))}
     </div>
+
+    {moreHref && (
+      <a class="aff-more" href={moreHref}>{moreLabel} →</a>
+    )}
 
     <p class="aff-note">
       ※このセクションはアフィリエイト広告（PR）を含みます。手数料やサービスの最新情報は各社の公式サイトでご確認ください。
@@ -191,6 +198,18 @@ const items = affiliates.filter(
   }
   .aff .aff-btn:hover {
     background: #17375f;
+  }
+  .aff .aff-more {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #17375f;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .aff .aff-more:hover {
+    color: #10233f;
   }
   .aff .aff-note {
     font-size: 11px;
