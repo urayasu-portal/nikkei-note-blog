@@ -646,15 +646,16 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
       .shell > main,
       .shell > aside { display: contents; }
       .shell > main > *,
-      .shell > aside > * { margin: 0; }
+      .shell > aside > :global(*) { margin: 0; }
 
-      /* 表示順: ヒーロー → 朝のチェックポイント → 索引 → 用語バナー → 残りサイドバー → 立ち位置 */
-      .shell .lead-sec        { order: 1; }
-      .shell aside .cp-card   { order: 2; }
-      .shell .index-sec       { order: 3; }
-      .shell .glossary-banner { order: 4; }
-      .shell aside > *        { order: 5; }
-      .shell .note-box        { order: 6; }
+      /* 表示順: ヒーロー → 朝のチェックポイント → 索引 → 用語バナー → 残りサイドバー → 立ち位置。
+         aside直下は別コンポーネント(CalendarWidget)も含むため :global(*) で全子要素に効かせる。 */
+      .shell .lead-sec           { order: 1; }
+      .shell aside .cp-card      { order: 2; }
+      .shell .index-sec          { order: 3; }
+      .shell .glossary-banner    { order: 4; }
+      .shell aside > :global(*)  { order: 5; }
+      .shell .note-box           { order: 6; }
 
       /* 相場サマリーはティッカー帯と数値が重複するためモバイルでは隠す */
       .shell aside .summary   { display: none; }
