@@ -632,6 +632,13 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
         font-size: 13px;
       }
       .footer-inner a { color: #9ec4e8; }
+      .footer-disclaimer {
+        max-width: 1200px;
+        margin: 14px auto 0;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #9ec4e8;
+      }
 
       /* レスポンシブ */
       @media (max-width: 860px) {
@@ -700,6 +707,9 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
         .article-body :global(li) { font-size: 15px; }
 
         .related-grid { grid-template-columns: 1fr; }
+
+        /* モバイルでは重複するサイドバーカード（コンパニオン＝本文内に既出／ナビ＝ヘッダーに既出）を隠す */
+        .side-hide-mobile { display: none; }
       }
     </style>
   </head>
@@ -800,6 +810,15 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
               </a>
             )}
 
+            <!-- アフィリエイトCTA（nikkei・deep記事のみ）: 読了直後の熱があるうちに配置 -->
+            {(category === 'nikkei' || category === 'deep') && (
+              <AffiliateCTA
+                category="securities"
+                heading="ネット証券で口座を開くなら"
+                lead="毎日の相場チェックや実際の売買には、使いやすいネット証券口座があると便利です。日本株の取引に定評のある2社を紹介します。"
+              />
+            )}
+
             <!-- 関連記事 -->
             {relatedPosts.length > 0 && (
               <div class="related-section">
@@ -854,15 +873,6 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
               </div>
             )}
 
-            <!-- アフィリエイトCTA（nikkei・deep記事のみ） -->
-            {(category === 'nikkei' || category === 'deep') && (
-              <AffiliateCTA
-                category="securities"
-                heading="ネット証券で口座を開くなら"
-                lead="毎日の相場チェックや実際の売買には、使いやすいネット証券口座があると便利です。日本株の取引に定評のある2社を紹介します。"
-              />
-            )}
-
           </div>
         </article>
       </main>
@@ -911,7 +921,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
 
         <!-- コンパニオン記事（サイドバー） -->
         {companionPost && (
-          <div class="side-card">
+          <div class="side-card side-hide-mobile">
             <h3>{category === 'nikkei' ? '深掘りノート' : '日経ノート（3分）'}</h3>
             <div class="related-list">
               <a class="related-item" href={`/blog/${companionPost.id}/`}>
@@ -925,7 +935,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
         )}
 
         <!-- ナビゲーション -->
-        <div class="side-card">
+        <div class="side-card side-hide-mobile">
           <h3>ナビゲーション</h3>
           <div class="related-list">
             <a class="related-item" href="/">
@@ -947,11 +957,6 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
           </div>
         </div>
 
-        <!-- 免責事項 -->
-        <div class="side-card">
-          <p style="font-size:12px;color:var(--muted);line-height:1.7;">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
-        </div>
-
       </aside>
     </div>
 
@@ -964,6 +969,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
           <a href="/contact">お問い合わせ</a>
         </div>
       </div>
+      <p class="footer-disclaimer">当サイトは情報提供を目的としており、特定銘柄の売買を推奨するものではありません。投資判断はご自身の責任でお願いいたします。</p>
     </footer>
 
   </body>

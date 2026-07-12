@@ -296,7 +296,10 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
       display: grid;
       grid-template-columns: minmax(0, 1fr) 300px;
       gap: 40px;
+      align-items: start;
     }
+    /* Bear Blog由来の main{margin:auto;padding:3em} を無効化（左カラムが縦センタリングされ上部に空白ができる不具合の解消） */
+    .shell > main { margin: 0; padding: 0; min-width: 0; }
 
     /* リード記事 */
     .lead-eyebrow {
@@ -632,7 +635,29 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
 
     /* ===== レスポンシブ ===== */
     @media (max-width: 980px) {
-      .shell { grid-template-columns: 1fr; gap: 32px; }
+      /* モバイル: main/aside を display:contents で解体し、直下ブロックを order で並べ替える。
+         デスクトップのグリッドには一切影響しない。 */
+      .shell {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 28px;
+      }
+      .shell > main,
+      .shell > aside { display: contents; }
+      .shell > main > *,
+      .shell > aside > * { margin: 0; }
+
+      /* 表示順: ヒーロー → 朝のチェックポイント → 索引 → 用語バナー → 残りサイドバー → 立ち位置 */
+      .shell .lead-sec        { order: 1; }
+      .shell aside .cp-card   { order: 2; }
+      .shell .index-sec       { order: 3; }
+      .shell .glossary-banner { order: 4; }
+      .shell aside > *        { order: 5; }
+      .shell .note-box        { order: 6; }
+
+      /* 相場サマリーはティッカー帯と数値が重複するためモバイルでは隠す */
+      .shell aside .summary   { display: none; }
     }
     @media (max-width: 860px) {
       nav { display: none; }
@@ -721,7 +746,7 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
   <div class="shell">
     <main>
       {latestPost && (
-        <section aria-label="今日のノート">
+        <section class="lead-sec" aria-label="今日のノート">
           <div class="lead-eyebrow">
             {leadBadge && <span class="lead-tag">{leadBadge.label}</span>}
             <span class="lead-date">{leadDate}</span>
@@ -800,7 +825,7 @@ const leadCompanionDeep = latestPost?.data.category === 'nikkei' && leadDatePref
 
     <aside>
       {md && (
-        <div class="side-card">
+        <div class="side-card summary">
           <h3>相場サマリー</h3>
           <div class="mkt">
             {md.nikkei && <div class="r"><span class="l">日経平均</span><span class="v">{fmtNum(md.nikkei)}</span></div>}
