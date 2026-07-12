@@ -160,3 +160,29 @@ hr {
 	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
 }
+
+/*
+  Google AdSense 自動広告の「本文カードへの重なり」防止（サイト全体）
+  ------------------------------------------------------------------
+  自動広告（特にマルチプレックス/関連コンテンツ広告）がモバイルで記事内に
+  差し込まれ、アフィリCTAや関連記事カードに重なる問題への防御。
+  挿入された広告ラッパー(.google-auto-placed)を通常フローに固定し、
+  絶対配置・浮き・はみ出しによる重なりを無効化する。
+  ※アンカー/全画面などのオーバーレイ広告(別コンテナ)には影響しない。
+  ※広告内容はクリップしない（policy配慮でoverflow:hiddenは付けない）。
+*/
+.google-auto-placed {
+	position: relative !important;
+	z-index: 0 !important;
+	float: none !important;
+	clear: both !important;
+	display: block !important;
+	max-width: 100% !important;
+	margin: 20px auto !important;
+	transform: none !important;
+}
+.google-auto-placed ins.adsbygoogle,
+.google-auto-placed iframe {
+	position: static !important;
+	max-width: 100% !important;
+}
