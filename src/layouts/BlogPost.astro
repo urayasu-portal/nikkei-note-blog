@@ -34,6 +34,7 @@ const categoryLabel =
   category === 'memo' ? '投資メモ' :
   category === 'glossary' ? '用語解説' :
   category === 'weekly' ? '週次振り返り' :
+  category === 'monthly' ? '月次まとめ' :
   category === 'guide' ? '投資ガイド' :
   category || '記事';
 
@@ -847,6 +848,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
                         post.data.category === 'memo' ? '投資メモ' :
                         post.data.category === 'glossary' ? '用語解説' :
                         post.data.category === 'weekly' ? '週次振り返り' :
+                        post.data.category === 'monthly' ? '月次まとめ' :
                         post.data.category === 'guide' ? '投資ガイド' :
                         post.data.category ?? '記事'
                       }</div>
