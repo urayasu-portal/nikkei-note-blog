@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# pre-commit: 他サイト（浦安ぽーたる）の記事の誤混入と、スキーマ違反を検出する
+#
+# 背景: 2026-08-13に浦安ぽーたる向けの記事が本リポジトリへ誤ってcommitされ、
+#       Astroのスキーマ検証が失敗してサイト全体のデプロイが2日間停止した。
+#       さらに原因を誤診した「修正」が第2の違反を生み、復旧が遅れた。
+#
+# 一時的に回避する場合: git commit --no-verify
+#
+
+ERR=0
+BLOG_DIR="src/content/blog"
+
+# ステージされた .md のうち記事ディレクトリ配下のものだけを対象にする
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep "^${BLOG_DIR}/.*\.md$" || true)
+[ -z "$FILES" ] && exit 0
+
+for f in $FILES; do
+	[ -f "$f" ] || continue
+
+	# BOM と CR を除去した frontmatter を取り出す
+	fm=$(sed '1s/^\xEF\xBB\xBF//' "$f" | tr -d '\r' \
+		| awk 'NR==1 && /^---$/ {f=1; next} f && /^---$/ {exit} f {print}')
+
+	if [ -z "$fm" ]; then
+		echo "  [NG] $f : frontmatter を読み取れません（--- で囲まれていない可能性）"
+		ERR=1
+		continue
+	fi
+
+	# --- 他サイトの記事の混入検出 ---------------------------------
+	# 浦安ぽーたる(Hugo)は date: / categories: / slug: を使い、pubDate: を持たない
+	if ! echo "$fm" | grep -q '^pubDate:'; then
+		echo "  [NG] $f : pubDate がありません"
+		echo "         → 浦安ぽーたるの記事を誤って投稿していませんか？"
+		echo "         → 浦安の記事は urayasu-portal/content/posts/ に置いてください"
+		ERR=1
+	fi
+
+	if echo "$fm" | grep -q '^categories:'; then
+		echo "  [NG] $f : categories:（複数形）は浦安ぽーたるの書式です"
+		echo "         → 本サイトは category:（単数形）を使います"
+		ERR=1
+	fi
+
+	# Hugoショートコードは本サイト(Astro)では動作しない
+	if grep -q '{{<' "$f"; then
+		echo "  [NG] $f : Hugoショートコード {{< >}} が含まれています（浦安ぽーたるの書式）"
+		ERR=1
+	fi
+
+	# --- スキーマ違反の検出 ---------------------------------------
+	# checkPoints は z.array(z.object({title, text})) が正しい形式
+	if echo "$fm" | grep -q '^checkPoints:'; then
+		first=$(echo "$fm" | awk '/^checkPoints:/ {f=1; next} f && /^[ \t]*-/ {print; exit}')
+		case "$first" in
+			*"- title:"*) : ;;
+			"") : ;;
+			*)
+				echo "  [NG] $f : checkPoints が文字列配列になっています"
+				echo "         → 正しい形式（src/content.config.ts のスキーマ）:"
+				echo "              checkPoints:"
+				echo "                - title: '見出し'"
+				echo "                  text: '本文'"
+				ERR=1
+				;;
+		esac
+	fi
+
+	# 必須フィールド
+	for key in title description; do
+		echo "$fm" | grep -q "^${key}:" || {
+			echo "  [NG] $f : ${key} がありません（スキーマ必須）"
+			ERR=1
+		}
+	done
+done
+
+if [ "$ERR" -ne 0 ]; then
+	echo ""
+	echo "commit を中止しました。上記を修正してください。"
+	echo "（意図的に通す場合は git commit --no-verify）"
+	exit 1
+fi
+
+exit 0
