@@ -50,20 +50,22 @@ for f in $FILES; do
 		ERR=1
 	fi
 
-	# --- スキーマ違反の検出 ---------------------------------------
-	# checkPoints は z.array(z.object({title, text})) が正しい形式
+	# --- checkPoints の書式 ---------------------------------------
+	# 正しい形式は z.array(z.object({title, text}))。
+	# ただしスキーマ側で文字列配列も正規化して受け付けるようにしたため
+	# （1本の書式ミスでサイト全体のデプロイが止まる事故が4回続いたため）、
+	# ここでは commit を止めず警告にとどめる。
 	if echo "$fm" | grep -q '^checkPoints:'; then
 		first=$(echo "$fm" | awk '/^checkPoints:/ {f=1; next} f && /^[ \t]*-/ {print; exit}')
 		case "$first" in
 			*"- title:"*) : ;;
 			"") : ;;
 			*)
-				echo "  [NG] $f : checkPoints が文字列配列になっています"
-				echo "         → 正しい形式（src/content.config.ts のスキーマ）:"
+				echo "  [警告] $f : checkPoints が文字列配列です（自動変換されます）"
+				echo "         → 正式な形式（src/content.config.ts のスキーマ）:"
 				echo "              checkPoints:"
 				echo "                - title: '見出し'"
 				echo "                  text: '本文'"
-				ERR=1
 				;;
 		esac
 	fi

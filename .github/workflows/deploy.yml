@@ -22,6 +22,12 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      # 記事の書式を先に検証する。Astro のスキーマエラーは原因ファイルが
+      # 分かりにくく、他サイトの記事の誤混入などで復旧が遅れた経緯があるため、
+      # 依存インストール前に明示的なメッセージで落とす（数秒で失敗が分かる）。
+      - name: Validate content
+        run: node scripts/validate-content.mjs
+
       - name: Install dependencies
         run: npm install
 
