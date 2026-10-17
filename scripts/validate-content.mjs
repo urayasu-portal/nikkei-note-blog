@@ -20,13 +20,21 @@
  *   ※ 隔離（ファイル削除）は CI 環境（$CI が設定されている時）のみ。
  *     ローカル実行では削除せずエラー扱いにする。
  *
- * 使い方: node scripts/validate-content.mjs
+ *   2026-10-17 改修: 内部向けの「編集者メモ」が公開記事に残る問題への対策。
+ *   本文に表示される見出し型（<h2>編集者メモ… / ## 編集者メモ / ■ 編集者メモ）と、
+ *   HTMLコメント型（<!-- 【編集者メモ・公開前に削除】 … -->）が101記事に残っていた。
+ *   .md の HTML コメントは Astro が除去せずそのまま公開HTMLに出力するため、
+ *   コメントでも「非公開」にはならない。検出したらエラーでビルドを止める。
+ *   本文に混ざった「要手動確認」等の単文は記事ごとの判断が要るので警告に留める。
+ *
+ * 使い方: node scripts/validate-content.mjs [記事ディレクトリ]
+ *   ディレクトリ省略時は src/content/blog（テスト用に別ディレクトリを渡せる）
  */
 
 import { readdirSync, readFileSync, unlinkSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BLOG_DIR = 'src/content/blog';
+const BLOG_DIR = process.argv[2] ?? 'src/content/blog';
 
 /** frontmatter 部分を取り出す（BOM と CRLF を除去） */
 function extractFrontmatter(input) {
@@ -46,6 +54,7 @@ function hasKey(fm, key) {
 const errors = [];
 const warnings = [];
 const quarantined = [];
+const annotations = []; // [level, path, line, message]
 
 // 隔離（ワークスペースからの削除）は CI でのみ行う。ローカルで走らせた場合に
 // 実ファイルを消してしまわないため。
@@ -64,6 +73,58 @@ function hugoSignals(fm, raw) {
 		signals.push('Hugo ショートコード {{< >}} が含まれています（Astro では展開されません）');
 	}
 	return signals;
+}
+
+// --- 編集者メモの検出 ------------------------------------------------------
+// 対象パターンは実際に混入した形式に限定する（「非公開化」「TOB」などの
+// 通常の記事用語で誤検知しないよう、単語単体では判定しない）。
+
+// コメント（HTML / MDX）の中身がこれを含めば内部メモとみなす
+const NOTE_KEYWORDS = /編集者メモ|公開前に削除|要手動確認|公開前確認/;
+// 本文に表示される見出し型: 行頭の <hN>／## ／■ ／**  のあとに「編集者メモ」
+const NOTE_HEADING = /^[ \t]*(?:<h[1-6][^>]*>|#{1,6}[ \t]+|(?:<p>)?[ \t]*■[ \t]*|\*\*)[ \t]*【?編集者メモ/gm;
+// 記事生成プロンプトの出力項目がそのまま本文に残ったもの（■ 抜粋／■ タグ 等）
+const PROMPT_SECTION = /^[ \t]*(?:<p>)?■[ \t]*(?:抜粋|タグ|カテゴリー|投稿タイトル|フロントマター)[ \t]*(?:<\/p>)?[ \t]*$/gm;
+// 本文の文中に残った確認指示（文章の書き換えが要るため警告のみ）
+const INLINE_NOTE = /要手動確認|公開前に[^。\n]{0,40}?(?:確認|検証)|フロントマターには/g;
+
+const COMMENT_BLOCK = /<!--[\s\S]*?(?:-->|$(?![\s\S]))|\{\/\*[\s\S]*?(?:\*\/\}|$(?![\s\S]))/g;
+
+const lineAt = (text, pos) => text.slice(0, pos).split('\n').length;
+const excerpt = (s) => s.replace(/\s+/g, ' ').trim().slice(0, 40);
+
+/** 本文中の編集者メモを探す。{ errors: [[line, msg]], warnings: [[line, msg]] } */
+function findEditorialNotes(input) {
+	const text = (input.charCodeAt(0) === 0xfeff ? input.slice(1) : input).replace(/\r\n/g, '\n');
+	// frontmatter の直後から本文（frontmatter の値は対象外）
+	const fmEnd = text.indexOf('\n---', 3);
+	const bodyStart = fmEnd === -1 ? 0 : text.indexOf('\n', fmEnd + 1) + 1;
+	const found = { errors: [], warnings: [] };
+
+	// 1) コメント内のメモ（閉じ忘れのコメントも末尾まで対象）
+	for (const m of text.matchAll(COMMENT_BLOCK)) {
+		if (m.index < bodyStart || !NOTE_KEYWORDS.test(m[0])) continue;
+		const closed = m[0].endsWith('-->') || m[0].endsWith('*/}');
+		found.errors.push([
+			lineAt(text, m.index),
+			`コメント内に編集者メモ${closed ? '' : '（コメントが閉じていません）'}: 「${excerpt(m[0].replace(/^<!--|^\{\/\*/, ''))}」 — HTMLコメントも公開HTMLにそのまま出力されます`,
+		]);
+	}
+
+	// 2) 本文に表示される形式（コメント部分は同じ長さの空白に置き換えて除外）
+	const visible = text.replace(COMMENT_BLOCK, (c) => c.replace(/[^\n]/g, ' '));
+	for (const m of visible.slice(bodyStart).matchAll(NOTE_HEADING)) {
+		found.errors.push([lineAt(text, bodyStart + m.index), `本文に編集者メモの見出し: 「${excerpt(m[0])}」`]);
+	}
+	for (const m of visible.slice(bodyStart).matchAll(PROMPT_SECTION)) {
+		found.errors.push([lineAt(text, bodyStart + m.index), `記事生成プロンプトの出力項目が本文に残っています: 「${excerpt(m[0])}」`]);
+	}
+	for (const m of visible.slice(bodyStart).matchAll(INLINE_NOTE)) {
+		const at = bodyStart + m.index;
+		const ctx = visible.slice(Math.max(bodyStart, at - 20), at + 20).replace(/<[^>]*>/g, '');
+		found.warnings.push([lineAt(text, at), `本文に確認指示らしき記述: 「${excerpt(ctx)}」`]);
+	}
+	return found;
 }
 
 const files = readdirSync(BLOG_DIR)
@@ -135,6 +196,30 @@ for (const name of files) {
 			]);
 		}
 	}
+
+	// --- 編集者メモ（内部向けの確認事項）の混入 --------------------------
+	const notes = findEditorialNotes(raw);
+	if (notes.errors.length > 0) {
+		errors.push([
+			path,
+			...notes.errors.map(([line, msg]) => `L${line}: ${msg}`),
+			'編集者メモは記事ファイルに含めず、投稿前に削除してください（HTMLコメントにしても公開されます）',
+		]);
+		for (const [line, msg] of notes.errors) annotations.push(['error', path, line, msg]);
+	}
+	if (notes.warnings.length > 0) {
+		warnings.push([
+			path,
+			...notes.warnings.map(([line, msg]) => `L${line}: ${msg}`),
+			'読者向けの文章として残すか、正しい値に直して削除するかを確認してください',
+		]);
+		for (const [line, msg] of notes.warnings) annotations.push(['warning', path, line, msg]);
+	}
+}
+
+// Actions の run ページ・PR の差分に行単位の注釈を出す（メッセージは1行）
+for (const [level, path, line, msg] of annotations) {
+	console.log(`::${level} file=${path},line=${line}::${msg.replace(/\r?\n/g, ' ')}`);
 }
 
 const fmt = (list) =>
