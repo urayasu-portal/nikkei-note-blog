@@ -37,7 +37,8 @@
 		"deploy": "wrangler deploy",
 		"dev": "astro dev",
 		"preview": "astro build && wrangler dev",
-		"validate": "node scripts/validate-content.mjs"
+		"validate": "node scripts/validate-content.mjs",
+		"test:validate": "node scripts/test-validate-content.mjs"
 	},
 	"type": "module"
 }

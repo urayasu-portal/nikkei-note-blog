@@ -283,6 +283,12 @@ category: 'nikkei'
       showStatus('error', '⚠️ .md 内容またはフロントマター（---）が見つかりません');
       return;
     }
+    var notes = findEditorialNotes(content);
+    if (notes.length) {
+      showStatus('error', '⚠️ 編集者メモ（内部向けの確認事項）が含まれています。削除してから投稿してください（HTMLコメントにしても公開されます）：<br>' +
+        notes.map(escHtml).join('<br>'));
+      return;
+    }
 
     btn.disabled = true;
     showStatus('loading', '⏳ 記事ファイルをGitHubに投稿しています...');
@@ -339,6 +345,27 @@ category: 'nikkei'
 
   function escHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // 編集者メモの混入チェック（scripts/validate-content.mjs と同じパターン）。
+  // 投稿後にデプロイが止まる前に、ここで気づけるようにする。
+  function findEditorialNotes(content) {
+    var text = content.replace(/^﻿/, '').replace(/\r\n/g, '\n');
+    var fmEnd = text.indexOf('\n---', 3);
+    var body = fmEnd === -1 ? text : text.slice(text.indexOf('\n', fmEnd + 1) + 1);
+    var found = [];
+    var comments = body.match(/<!--[\s\S]*?(?:-->|$(?![\s\S]))|\{\/\*[\s\S]*?(?:\*\/\}|$(?![\s\S]))/g) || [];
+    comments.forEach(function (c) {
+      if (/編集者メモ|公開前に削除|要手動確認|公開前確認/.test(c)) {
+        found.push('コメント内のメモ：' + c.replace(/^<!--|^\{\/\*/, '').replace(/\s+/g, ' ').trim().slice(0, 30) + '…');
+      }
+    });
+    var visible = body.replace(/<!--[\s\S]*?(?:-->|$(?![\s\S]))|\{\/\*[\s\S]*?(?:\*\/\}|$(?![\s\S]))/g, '');
+    var heads = visible.match(/^[ \t]*(?:<h[1-6][^>]*>|#{1,6}[ \t]+|(?:<p>)?[ \t]*■[ \t]*|\*\*)[ \t]*【?編集者メモ.*$/gm) || [];
+    heads.forEach(function (h) { found.push('本文の見出し：' + h.trim().slice(0, 30)); });
+    var sections = visible.match(/^[ \t]*(?:<p>)?■[ \t]*(?:抜粋|タグ|カテゴリー|投稿タイトル|フロントマター)[ \t]*(?:<\/p>)?[ \t]*$/gm) || [];
+    sections.forEach(function (s) { found.push('プロンプトの出力項目：' + s.trim()); });
+    return found;
   }
 
   function showStatus(type, msg) {
