@@ -26,6 +26,13 @@ export interface Affiliate {
   headline: string;
   points: string[];
   cta: string;
+  /** 広告主がASP上で指定する手数料・リスク説明への案内（指定がある場合のみ。文言は指定どおり） */
+  riskNotice?: {
+    before: string;
+    linkText: string;
+    after: string;
+    href: string;
+  };
 }
 
 export const affiliates: Affiliate[] = [
@@ -49,7 +56,7 @@ export const affiliates: Affiliate[] = [
   },
   {
     id: 'dmm-kabu',
-    name: 'DMM株',
+    name: 'DMM 株',
     category: 'securities',
     status: 'approved',
     asp: 'a8',
@@ -63,7 +70,14 @@ export const affiliates: Affiliate[] = [
       '米国株の取扱いにも対応',
       'NISA口座にも対応',
     ],
-    cta: 'DMM株の詳細を見る',
+    cta: 'DMM 株の詳細を見る',
+    // A8.net プログラム詳細「広告表示についての注意事項」で指定された案内（2026-10-20確認）
+    riskNotice: {
+      before: '投資にかかる手数料、リスク等については',
+      linkText: 'こちら',
+      after: 'をご参照ください。',
+      href: 'https://kabu.dmm.com/lp/ad-aa/general/',
+    },
   },
   {
     id: 'matsui-ideco',

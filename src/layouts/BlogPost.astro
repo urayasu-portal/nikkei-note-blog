@@ -6,7 +6,7 @@ import SiteHeader from '../components/SiteHeader.astro';
 import AffiliateCTA from '../components/AffiliateCTA.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
-type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number };
+type Props = CollectionEntry<'blog'>['data'] & { readTimeMin?: number; hasAffiliateInBody?: boolean };
 
 const {
   title,
@@ -26,7 +26,13 @@ const {
   nasdaq,
   nasdaqDate,
   readTimeMin,
+  hasAffiliateInBody = false,
 } = Astro.props;
+
+// 記事下アフィリエイトCTAを出すカテゴリ（CTA本体とPR表記で同じ条件を使う）
+const showsFooterAffiliate = category === 'nikkei' || category === 'deep';
+// 広告を含む記事は、ファーストビュー（記事ヘッダー）にもPR表記を出す（A8.netの広告表示ルール）
+const showsPrDisclosure = showsFooterAffiliate || hasAffiliateInBody;
 
 const categoryLabel =
   category === 'nikkei' ? '日経ノート' :
@@ -256,6 +262,25 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
         font-size: 14px;
         line-height: 1.8;
         max-width: 680px;
+      }
+      .pr-disclosure {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .pr-chip {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: #6b7280;
+        background: #eef2f7;
+        border: 1px solid #dbe3ef;
+        border-radius: 4px;
+        padding: 1px 7px;
       }
 
       /* 相場チップ列（frontmatterに指標があるときのみ） */
@@ -751,6 +776,9 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
             </div>
             <h1 class="article-title">{title}</h1>
             {description && <p class="article-description">{description}</p>}
+            {showsPrDisclosure && (
+              <p class="pr-disclosure"><span class="pr-chip">PR</span>本記事はアフィリエイト広告を含みます。</p>
+            )}
           </div>
 
           <!-- 相場チップ列（指標データがある記事のみ） -->
@@ -826,7 +854,7 @@ const nextPost = currentIdx > 0 ? sameCatPosts[currentIdx - 1] : undefined;
             )}
 
             <!-- アフィリエイトCTA（nikkei・deep記事のみ）: 読了直後の熱があるうちに配置 -->
-            {(category === 'nikkei' || category === 'deep') && (
+            {showsFooterAffiliate && (
               <AffiliateCTA
                 category="securities"
                 heading="ネット証券で口座を開くなら"

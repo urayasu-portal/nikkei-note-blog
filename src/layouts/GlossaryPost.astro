@@ -197,6 +197,9 @@ const affiliateCTA = affiliateBySlug[currentSlug];
               )}
             </div>
             <h1 class="g-article-title">{title}</h1>
+            {affiliateCTA && (
+              <p class="g-pr-disclosure"><span class="g-pr-chip">PR</span>本記事はアフィリエイト広告を含みます。</p>
+            )}
             {tags && tags.length > 0 && (
               <div class="g-tags">
                 {tags.map((t) => <span class="g-tag">#{t}</span>)}
