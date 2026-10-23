@@ -39,6 +39,11 @@ const items = affiliates.filter(
           <ul class="aff-points">
             {a.points.map((p) => <li>{p}</li>)}
           </ul>
+          {a.riskNotice && (
+            <p class="aff-risk">
+              {a.riskNotice.before}<a href={a.riskNotice.href} target="_blank" rel="nofollow noopener">{a.riskNotice.linkText}</a>{a.riskNotice.after}
+            </p>
+          )}
           <a class="aff-btn" href={a.href} target="_blank" rel="sponsored nofollow noopener">
             {a.cta}
             <span aria-hidden="true">→</span>
@@ -198,6 +203,22 @@ const items = affiliates.filter(
   }
   .aff .aff-btn:hover {
     background: #17375f;
+  }
+  /* 注意書きはボタン直前に置き、カード下端へ寄せる（隣のカードとボタン位置をそろえるため） */
+  .aff .aff-risk {
+    margin-top: auto;
+    margin-bottom: 0;
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.7;
+  }
+  .aff .aff-risk + .aff-btn {
+    margin-top: 8px;
+  }
+  .aff .aff-risk a {
+    color: #185fa5;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .aff .aff-more {
     display: inline-block;
