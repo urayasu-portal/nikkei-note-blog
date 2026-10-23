@@ -18,6 +18,8 @@ const { Content } = await render(post);
 
 const plainText = (post.body ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 const readTimeMin = Math.max(1, Math.ceil(plainText.length / 500));
+// 本文（MDX）にアフィリエイトCTAを埋め込んでいる記事か（記事冒頭のPR表記の出し分けに使う）
+const hasAffiliateInBody = (post.body ?? '').includes('<AffiliateCTA');
 ---
 
 {post.data.category === 'glossary' ? (
@@ -25,7 +27,7 @@ const readTimeMin = Math.max(1, Math.ceil(plainText.length / 500));
     <Content />
   </GlossaryPost>
 ) : (
-  <BlogPost {...post.data} readTimeMin={readTimeMin}>
+  <BlogPost {...post.data} readTimeMin={readTimeMin} hasAffiliateInBody={hasAffiliateInBody}>
     <Content />
   </BlogPost>
 )}
